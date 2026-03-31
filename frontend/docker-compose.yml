@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # 1. MongoDB Bazasi
+  mongodb:
+    image: mongo:latest
+    container_name: navbat_db
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # 2. Node.js Backend Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: navbat_backend
+    restart: always
+    environment:
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/queue_system
+      - JWT_SECRET=navbat_super_docker_secret_2026
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+
+  # 3. React Frontend Nginx bilan
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: navbat_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
