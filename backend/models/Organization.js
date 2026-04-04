@@ -1,41 +1,49 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const OrganizationSchema = new mongoose.Schema({
+const Organization = sequelize.define('Organization', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
   name: {
-    type: String,
-    required: [true, 'Tashkilot nomi majburiy'],
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notNull: { msg: 'Tashkilot nomi majburiy' },
+      notEmpty: { msg: 'Tashkilot nomi majburiy' }
+    }
   },
   category: {
-    type: String,
-    enum: ['bank', 'hospital', 'government', 'hokimiyat', 'education', 'tax'],
-    required: true,
+    type: DataTypes.ENUM('bank', 'hospital', 'government', 'hokimiyat', 'education', 'tax'),
+    allowNull: false,
   },
   branch: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   address: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   phone: {
-    type: String,
+    type: DataTypes.STRING,
   },
   workHours: {
-    type: String,
-    default: '09:00 - 18:00',
+    type: DataTypes.STRING,
+    defaultValue: '09:00 - 18:00',
   },
-  services: [{
-    type: String
-  }],
+  services: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+  },
   isOpen: {
-    type: Boolean,
-    default: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  }
+}, {
+  timestamps: true,
 });
 
-module.exports = mongoose.model('Organization', OrganizationSchema);
+module.exports = Organization;

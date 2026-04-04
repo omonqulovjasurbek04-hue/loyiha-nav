@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const { User } = require('../models');
 const router = express.Router();
 
 // Xavfsiz JWT Token Yaratuvchi (Helper Function)
@@ -18,7 +18,7 @@ router.post('/register', async (req, res) => {
     const { name, phone, email, password, role, organizationId } = req.body;
 
     // Telefon raqam mavjudligini tekshirish
-    const phoneExists = await User.findOne({ phone });
+    const phoneExists = await User.findOne({ where: { phone } });
     if (phoneExists) {
        return res.status(400).json({ success: false, error: 'Bu telefon raqam bilan avval ro\'yxatdan o\'tilgan.' });
     }
@@ -33,12 +33,12 @@ router.post('/register', async (req, res) => {
       email,
       password: hashedPassword,
       role: role || 'client', // Default 'client'
-      organizationId // Faqat org workerlarga
+      organizationId: organizationId || null
     });
 
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
 
-    res.status(201).json({ success: true, token, user: { id: user._id, name, role: user.role }});
+    res.status(201).json({ success: true, token, user: { id: user.id, name, role: user.role }});
 
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -56,8 +56,8 @@ router.post('/login', async (req, res) => {
        return res.status(400).json({ success: false, error: 'Iltimos, telefon va parolni kiriting' });
     }
 
-    // Bazadan qidirish, Select('+password') shartli chunki parolni odatda bazadan qaytarmaydigan qilingan "User schema"sida
-    const user = await User.findOne({ phone }).select('+password');
+    // Bazadan qidirish, scope ulanadi chunki user modelda password default exclude qilingan
+    const user = await User.scope('withPassword').findOne({ where: { phone } });
     if (!user) {
        return res.status(401).json({ success: false, error: 'Bunday profil topilmadi' });
     }
@@ -69,8 +69,8 @@ router.post('/login', async (req, res) => {
     }
 
     // Success response
-    const token = generateToken(user._id);
-    res.status(200).json({ success: true, token, user: { id: user._id, name: user.name, role: user.role, organizationId: user.organizationId }});
+    const token = generateToken(user.id);
+    res.status(200).json({ success: true, token, user: { id: user.id, name: user.name, role: user.role, organizationId: user.organizationId }});
 
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

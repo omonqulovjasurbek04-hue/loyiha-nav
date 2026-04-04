@@ -1,39 +1,72 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const UserSchema = new mongoose.Schema({
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
   name: {
-    type: String,
-    required: [true, 'Ismni kiritish majburiy'],
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notNull: { msg: 'Ismni kiritish majburiy' },
+      notEmpty: { msg: 'Ismni kiritish majburiy' }
+    }
   },
   phone: {
-    type: String,
-    required: [true, 'Telefon raqamini kiritish majburiy'],
-    unique: true,
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: {
+      msg: 'Ushbu telefon raqami allaqachon band.'
+    },
+    validate: {
+      notNull: { msg: 'Telefon raqamini kiritish majburiy' },
+      notEmpty: { msg: 'Telefon raqamini kiritish majburiy' }
+    }
   },
   email: {
-    type: String,
-    unique: true,
-    sparse: true,
+    type: DataTypes.STRING,
+    unique: {
+      msg: 'Ushbu xat manzili (email) band.'
+    },
+    allowNull: true,
   },
   password: {
-    type: String,
-    required: [true, 'Parolni kiritish majburiy'],
-    minlength: 6,
-    select: false,
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notNull: { msg: 'Parolni kiritish majburiy' },
+      notEmpty: { msg: 'Parolni kiritish majburiy' },
+      len: {
+        args: [6, 255],
+        msg: 'Parol kamida 6 belgidan iborat bo\'lishi kerak'
+      }
+    }
   },
   role: {
-    type: String,
-    enum: ['client', 'operator', 'admin'],
-    default: 'client',
+    type: DataTypes.ENUM('client', 'operator', 'admin'),
+    defaultValue: 'client',
   },
   organizationId: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Organization',
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'Organizations', 
+      key: 'id'
+    }
+  }
+}, {
+  timestamps: true,
+  defaultScope: {
+    attributes: { exclude: ['password'] },
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+  scopes: {
+    withPassword: {
+      attributes: { },
+    }
+  }
 });
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = User;

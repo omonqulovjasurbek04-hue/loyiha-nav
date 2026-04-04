@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const { User } = require('../models');
 
 // Himoyalangan Marshrutlarni (Protected Routes) tekshirish
 exports.protect = async (req, res, next) => {
@@ -20,7 +20,10 @@ exports.protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Foydalanuvchini bazadan topish
-    req.user = await User.findById(decoded.id);
+    req.user = await User.findByPk(decoded.id);
+    if (!req.user) {
+       return res.status(401).json({ success: false, error: 'Bunday foydalanuvchi tizimda mavjud emas' });
+    }
     next();
   } catch (error) {
     return res.status(401).json({ success: false, error: 'Token muddati tugagan yoki xato: Ruxsat yo\'q' });

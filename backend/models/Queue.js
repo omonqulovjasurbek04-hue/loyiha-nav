@@ -1,61 +1,77 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const QueueSchema = new mongoose.Schema({
+const Queue = sequelize.define('Queue', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
   token: {
-    type: String,
-    required: [true, 'Navbat raqami majburiy'],
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notNull: { msg: 'Navbat raqami majburiy' },
+      notEmpty: { msg: 'Navbat raqami majburiy' }
+    }
   },
   number: {
-    type: Number,
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
   userId: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'User',
-    required: true,
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
   },
   organizationId: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Organization',
-    required: true,
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: 'Organizations',
+      key: 'id'
+    }
   },
   service: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   status: {
-    type: String,
-    enum: ['waiting', 'called', 'serving', 'done', 'cancelled', 'missed'],
-    default: 'waiting',
+    type: DataTypes.ENUM('waiting', 'called', 'serving', 'done', 'cancelled', 'missed'),
+    defaultValue: 'waiting',
   },
   date: {
-    type: Date,
-    required: true,
+    type: DataTypes.DATEONLY,
+    allowNull: false,
   },
   bookedTime: {
-    type: String, // Misol uchun: '10:30'
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   calledAt: {
-    type: Date,
+    type: DataTypes.DATE,
   },
   servedAt: {
-    type: Date,
+    type: DataTypes.DATE,
   },
   completedAt: {
-    type: Date,
+    type: DataTypes.DATE,
   },
   estimatedWaitMinutes: {
-    type: Number,
-    default: 0,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  }
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      unique: true,
+      fields: ['organizationId', 'date', 'number']
+    }
+  ]
 });
 
-// Kuniga har bir filial va servis uchun raqamlash qulay bo'lishi lozim (index bilan tezlik)
-QueueSchema.index({ organizationId: 1, date: 1, number: 1 }, { unique: true });
-
-module.exports = mongoose.model('Queue', QueueSchema);
+module.exports = Queue;

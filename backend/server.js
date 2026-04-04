@@ -23,8 +23,8 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ success: true, message: 'Navbat.uz Backend API ishlamoqda' });
 });
 
-// MongoDB ga ulanish (background — server to'xtamaydi)
-const connectDB = require('./config/db');
+// MySQL ga ulanish (background — server to'xtamaydi)
+const { connectDB } = require('./config/db');
 connectDB();
 
 // API Route'larni yuklash

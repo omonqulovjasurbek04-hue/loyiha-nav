@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const Queue = require('../models/Queue');
+const { Queue, Organization, User } = require('../models');
 const { protect, authorize } = require('../middleware/auth');
+const { Op } = require('sequelize');
 
 // @route   POST /api/queues/book
 // @desc    Yangi navbat olish
@@ -9,9 +10,11 @@ router.post('/book', protect, async (req, res) => {
   try {
     const { organizationId, service, date, bookedTime } = req.body;
 
-    const count = await Queue.countDocuments({
-      organizationId,
-      date: new Date(date)
+    const count = await Queue.count({
+      where: {
+        organizationId,
+        date: date
+      }
     });
 
     const tokenNumber = count + 1;
@@ -25,7 +28,7 @@ router.post('/book', protect, async (req, res) => {
       userId: req.user.id,
       organizationId,
       service,
-      date: new Date(date),
+      date: date,
       bookedTime,
       estimatedWaitMinutes: calculatedWaitMins,
       status: 'waiting'
@@ -43,7 +46,7 @@ router.post('/book', protect, async (req, res) => {
 
     res.status(201).json({ success: true, data: newQueue });
   } catch (error) {
-    if (error.code === 11000) {
+    if (error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ success: false, error: 'Bu navbat raqami allaqachon mavjud.' });
     }
     res.status(500).json({ success: false, error: error.message });
@@ -54,9 +57,18 @@ router.post('/book', protect, async (req, res) => {
 // @desc    Foydalanuvchining o'z navbatlari
 router.get('/my', protect, async (req, res) => {
   try {
-    const myQueues = await Queue.find({ userId: req.user.id })
-      .populate('organizationId', 'name branch address')
-      .sort({ date: -1, createdAt: -1 });
+    const myQueues = await Queue.findAll({
+      where: { userId: req.user.id },
+      include: [{
+        model: Organization,
+        as: 'organization',
+        attributes: ['name', 'branch', 'address']
+      }],
+      order: [
+        ['date', 'DESC'],
+        ['createdAt', 'DESC']
+      ]
+    });
 
     res.status(200).json({ success: true, data: myQueues });
   } catch (error) {
@@ -72,17 +84,20 @@ router.get('/org/:orgId', protect, authorize('operator', 'admin'), async (req, r
     const { orgId } = req.params;
     const dateStr = req.query.date || new Date().toISOString().split('T')[0];
 
-    const startOfDay = new Date(dateStr);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(dateStr);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const queues = await Queue.find({
-      organizationId: orgId,
-      date: { $gte: startOfDay, $lte: endOfDay }
-    })
-      .populate('userId', 'name phone')
-      .sort({ number: 1 });
+    const queues = await Queue.findAll({
+      where: {
+        organizationId: orgId,
+        date: dateStr
+      },
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['name', 'phone']
+      }],
+      order: [
+        ['number', 'ASC']
+      ]
+    });
 
     res.status(200).json({ success: true, count: queues.length, data: queues });
   } catch (error) {
@@ -97,17 +112,23 @@ router.put('/:id/status', protect, authorize('operator', 'admin'), async (req, r
     const { status } = req.body;
     let updateData = { status };
 
-    if (status === 'called') updateData.calledAt = Date.now();
-    if (status === 'serving') updateData.servedAt = Date.now();
-    if (status === 'done') updateData.completedAt = Date.now();
+    if (status === 'called') updateData.calledAt = new Date();
+    if (status === 'serving') updateData.servedAt = new Date();
+    if (status === 'done') updateData.completedAt = new Date();
 
-    const queue = await Queue.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true, runValidators: true }
-    ).populate('userId', 'name phone');
-
+    const queue = await Queue.findByPk(req.params.id);
     if (!queue) return res.status(404).json({ success: false, error: 'Navbat topilmadi!' });
+
+    await queue.update(updateData);
+    
+    // Yana foydalanuvchini ham qo'shib yuklaymiz
+    await queue.reload({
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['name', 'phone']
+      }]
+    });
 
     // Real-time: status o'zgargani haqida
     const io = req.app.get('io');

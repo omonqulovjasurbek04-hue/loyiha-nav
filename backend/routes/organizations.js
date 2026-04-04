@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const Organization = require('../models/Organization');
+const { Organization } = require('../models');
 const { protect, authorize } = require('../middleware/auth');
 
 // @route   GET /api/organizations
 // @desc    Barcha tashkilotlarni olish (Ochiq)
 router.get('/', async (req, res) => {
   try {
-    const orgs = await Organization.find();
+    const orgs = await Organization.findAll();
     res.status(200).json({ success: true, count: orgs.length, data: orgs });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -29,7 +29,7 @@ router.post('/', protect, authorize('admin'), async (req, res) => {
 // @desc    Bitta tashkilot ma'lumotlarini olish (Ochiq)
 router.get('/:id', async (req, res) => {
    try {
-     const org = await Organization.findById(req.params.id);
+     const org = await Organization.findByPk(req.params.id);
      if (!org) {
         return res.status(404).json({ success: false, error: 'Xatolik: Bunday tashkilot topilmadi' });
      }
