@@ -83,11 +83,14 @@ io.on('connection', (socket) => {
 const publicPath = path.join(__dirname, 'public');
 if (fs.existsSync(publicPath)) {
   app.use(express.static(publicPath));
-  app.get('*', (req, res) => {
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api')) {
+      return res.sendFile(path.join(publicPath, 'index.html'));
+    }
     if (req.path.startsWith('/api')) {
       return res.status(404).json({ success: false, error: 'Endpoint topilmadi' });
     }
-    res.sendFile(path.join(publicPath, 'index.html'));
+    next();
   });
 }
 
