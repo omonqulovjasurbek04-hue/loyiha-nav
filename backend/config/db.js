@@ -1,27 +1,37 @@
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize(process.env.MYSQL_URL, {
-  dialect: 'mysql',
-  logging: false, // Konsolga so'rovlar chiqmasligi uchun
-  pool: {
-    max: 5,
-    min: 0,
-    acquire: 30000,
-    idle: 10000
-  }
-});
+let sequelize;
+
+if (process.env.MYSQL_URL) {
+  sequelize = new Sequelize(process.env.MYSQL_URL, {
+    dialect: 'mysql',
+    logging: false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
+  });
+} else {
+  // Graceful fallback to prevent app crash if variable is missing
+  sequelize = new Sequelize('mysql://root:pass@localhost:3306/test', {
+    dialect: 'mysql',
+    logging: false
+  });
+}
 
 const connectDB = async () => {
   try {
     if (!process.env.MYSQL_URL) {
-      console.error("MYSQL_URL muhit o'zgaruvchisi topilmadi!");
+      console.error("❌ XATOLIK: MYSQL_URL muhit o'zgaruvchisi topilmadi!");
+      console.error("Iltimos Railway dagi Web xizmatingiz Variables qismiga MYSQL_URL ni va uning qiymatini kiritishni unutmang!");
       return;
     }
     
     await sequelize.authenticate();
     console.log(`✅ MySQL Ulangan: ${sequelize.config.host}`);
     
-    // Jadvallarni avtomatik tuzish (bu fayllarni chaqiramizki, u registratsiya bo'lsin)
     require('../models');
     await sequelize.sync({ alter: true });
     console.log(`✅ MySQL jadvallar yangilandi va tayyor.`);
