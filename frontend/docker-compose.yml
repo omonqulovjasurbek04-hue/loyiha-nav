@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # 1. MongoDB Bazasi
   mongodb:
     image: mongo:latest
     container_name: navbat_db
@@ -11,10 +10,9 @@ services:
     volumes:
       - mongo_data:/data/db
 
-  # 2. Node.js Backend Server
   backend:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     container_name: navbat_backend
     restart: always
@@ -27,11 +25,14 @@ services:
     depends_on:
       - mongodb
 
-  # 3. React Frontend Nginx bilan
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Brauzer backendga to'g'ridan-to'g'ri ulanadi (nginx proksi yo'q)
+        VITE_API_URL: http://localhost:5000/api
+        VITE_SOCKET_URL: http://localhost:5000
     container_name: navbat_frontend
     restart: always
     ports:

@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
@@ -63,6 +65,18 @@ io.on('connection', (socket) => {
 app.get('/api/health', (req, res) => {
   res.status(200).json({ success: true, message: 'Navbat.uz Backend API barqaror ishlamoqda' });
 });
+
+// Docker / production: frontend/dist → public (bitta serverda SPA)
+const publicPath = path.join(__dirname, 'public');
+if (fs.existsSync(publicPath)) {
+  app.use(express.static(publicPath));
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ success: false, error: 'Endpoint topilmadi' });
+    }
+    res.sendFile(path.join(publicPath, 'index.html'));
+  });
+}
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

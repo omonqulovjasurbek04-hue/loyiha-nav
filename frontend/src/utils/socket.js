@@ -1,6 +1,12 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+const explicit = import.meta.env.VITE_SOCKET_URL;
+const SOCKET_URL =
+  explicit !== undefined && explicit !== ''
+    ? explicit
+    : import.meta.env.DEV
+      ? 'http://localhost:5000'
+      : window.location.origin;
 
 // Socket server bilan aloqa ulanmoqda...
 const socket = io(SOCKET_URL, {

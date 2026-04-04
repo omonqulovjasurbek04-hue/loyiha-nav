@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-// Backend serverga o'tkazish indeksi (development)
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Dev: to'g'ri backend porti; prod (bitta konteyner): /api
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? 'http://localhost:5000/api' : '/api');
 
 const api = axios.create({
   baseURL: API_URL,
