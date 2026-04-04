@@ -6,29 +6,28 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 
-// Env yuklash
+// Env yuklash (birinchi!)
 dotenv.config();
 
 const app = express();
 
-// ✅ HEALTHCHECK — MongoDB kutmasdan darhol javob beradi (deploydan oldin tekshiriladi)
+// ✅ Middleware — barcha routedan OLDIN bo'lishi SHART
+app.use(express.json());
+app.use(cors({
+  origin: process.env.CLIENT_URL || '*',
+  credentials: true,
+}));
+
+// ✅ HEALTHCHECK — MongoDB kutmasdan darhol javob beradi
 app.get('/api/health', (req, res) => {
   res.status(200).json({ success: true, message: 'Navbat.uz Backend API ishlamoqda' });
 });
 
-// MongoDB ga ulanish (background)
+// MongoDB ga ulanish (background — server to'xtamaydi)
 const connectDB = require('./config/db');
 connectDB();
 
-// Body parser (JSON datani parse qilish)
-app.use(express.json());
-
-// CORS ruxsatnomasi (Frontend bilan xavfsiz ulanish)
-app.use(cors({
-  origin: '*', // Hozircha barcha domenda ulashga ruxsat, Producton'da 'http://localhost:5173' bo'ladi
-}));
-
-// API Marshrutlarini yuklash
+// API Route'larni yuklash
 const authRoutes = require('./routes/auth');
 const orgRoutes = require('./routes/organizations');
 const queueRoutes = require('./routes/queues');
@@ -37,28 +36,42 @@ app.use('/api/auth', authRoutes);
 app.use('/api/organizations', orgRoutes);
 app.use('/api/queues', queueRoutes);
 
-// HTTP va WebSocket serverni bitta portga ulash
+// HTTP va Socket.IO serverni bitta portga ulash
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
+    origin: process.env.CLIENT_URL || '*',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
 });
 
-// Asosiy Server-Socket.io Eventlari
-io.on('connection', (socket) => {
-  console.log(`Bitta foydalanuvchi tizimga ulandi: ${socket.id}`);
+// io ni route'lardan ishlatish uchun app'ga qo'shamiz
+app.set('io', io);
 
-  // Operator mijozni chaqirganda
-  socket.on('call_next', (data) => {
-    // Frontedda zal ekraniga chaqiriq berish
-    io.emit('queue_called', data);
+// Socket.IO Eventlar
+io.on('connection', (socket) => {
+  console.log(`Foydalanuvchi ulandi: ${socket.id}`);
+
+  // Operator o'z tashkilot xonasiga qo'shiladi
+  socket.on('join_org', (orgId) => {
+    socket.join(`org_${orgId}`);
+    console.log(`Socket ${socket.id} org_${orgId} xonasiga kirdi`);
   });
 
-  // Navbat malumotlari yangilantirilganda
+  // Operator navbatni chaqirganda — zal ekraniga signal ketadi
+  socket.on('call_next', (data) => {
+    io.to(`org_${data.orgId}`).emit('queue_called', data);
+    io.emit('queue_called', data); // display board uchun ham
+  });
+
+  // Navbat holati yangilanganda — barcha ulangan clientlarga xabar
   socket.on('queue_updated', (data) => {
-    io.emit('queue_status_changed', data);
+    if (data.orgId) {
+      io.to(`org_${data.orgId}`).emit('queue_status_changed', data);
+    } else {
+      io.emit('queue_status_changed', data);
+    }
   });
 
   socket.on('disconnect', () => {
@@ -66,9 +79,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// (health endpoint yuqorida aniqlangan)
-
-// Docker / production: frontend/dist → public (bitta serverda SPA)
+// Production: frontend build fayllarini serve qilish
 const publicPath = path.join(__dirname, 'public');
 if (fs.existsSync(publicPath)) {
   app.use(express.static(publicPath));
@@ -80,6 +91,7 @@ if (fs.existsSync(publicPath)) {
   });
 }
 
+// Global xato ushlash middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ success: false, error: 'Serverda xatolik yuz berdi' });
@@ -88,5 +100,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log(`Backend Server va Websocket port ${PORT} da yugurmoqda`);
+  console.log(`✅ Server port ${PORT} da ishlamoqda`);
+  console.log(`✅ WebSocket (Socket.IO) tayyor`);
 });

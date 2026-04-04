@@ -4,23 +4,20 @@ const Queue = require('../models/Queue');
 const { protect, authorize } = require('../middleware/auth');
 
 // @route   POST /api/queues/book
-// @desc    Yangi navbat olish darchasi
+// @desc    Yangi navbat olish
 router.post('/book', protect, async (req, res) => {
   try {
     const { organizationId, service, date, bookedTime } = req.body;
-    
-    // Bugungi sana bo'yicha filial va servisda nechta qator band bo'lganini bilish (raqam ajratish uchun)
-    const count = await Queue.countDocuments({ 
-       organizationId, 
-       date: new Date(date)
-    });
-    
-    const tokenNumber = count + 1;
-    // Prefix qo'shish, masalan 35 -> A-035 (oddiy algoritim)
-    const strNum = String(tokenNumber).padStart(3, '0');
-    const tokenString = `A-${strNum}`; // 'A' barcha service turlari uchun misol tariqasida
 
-    const calculatedWaitMins = count * 10; // Taxminan har bir klient uchun 10 daqiqa yashirin reja qilinadi o'rtacha
+    const count = await Queue.countDocuments({
+      organizationId,
+      date: new Date(date)
+    });
+
+    const tokenNumber = count + 1;
+    const strNum = String(tokenNumber).padStart(3, '0');
+    const tokenString = `A-${strNum}`;
+    const calculatedWaitMins = count * 10;
 
     const newQueue = await Queue.create({
       token: tokenString,
@@ -34,48 +31,107 @@ router.post('/book', protect, async (req, res) => {
       status: 'waiting'
     });
 
+    // Real-time: yangi navbat qo'shilgani haqida xabar
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`org_${organizationId}`).emit('queue_status_changed', {
+        orgId: organizationId,
+        action: 'new_booking',
+        queue: newQueue
+      });
+    }
+
     res.status(201).json({ success: true, data: newQueue });
   } catch (error) {
-    if(error.code === 11000) {
-      return res.status(400).json({ success: false, error: 'Gud navbat index allaqachon yaratilgan.'});
+    if (error.code === 11000) {
+      return res.status(400).json({ success: false, error: 'Bu navbat raqami allaqachon mavjud.' });
     }
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // @route   GET /api/queues/my
-// @desc    Shaxsiy olingan barcha navbatlarni ro'yxatini va hozirgilarini olish
+// @desc    Foydalanuvchining o'z navbatlari
 router.get('/my', protect, async (req, res) => {
-   try {
-     const myQueues = await Queue.find({ userId: req.user.id })
-            .populate('organizationId', 'name branch')
-            .sort({ date: -1, createdAt: -1 });
+  try {
+    const myQueues = await Queue.find({ userId: req.user.id })
+      .populate('organizationId', 'name branch address')
+      .sort({ date: -1, createdAt: -1 });
 
-     res.status(200).json({ success: true, data: myQueues });
-   } catch (error) {
-     res.status(500).json({ success: false, error: error.message });
-   }
+    res.status(200).json({ success: true, data: myQueues });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// @route   GET /api/queues/org/:orgId
+// @desc    Tashkilot navbatlarini olish (Operator va Admin uchun)
+// @query   ?date=YYYY-MM-DD (ixtiyoriy, default: bugun)
+router.get('/org/:orgId', protect, authorize('operator', 'admin'), async (req, res) => {
+  try {
+    const { orgId } = req.params;
+    const dateStr = req.query.date || new Date().toISOString().split('T')[0];
+
+    const startOfDay = new Date(dateStr);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(dateStr);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const queues = await Queue.find({
+      organizationId: orgId,
+      date: { $gte: startOfDay, $lte: endOfDay }
+    })
+      .populate('userId', 'name phone')
+      .sort({ number: 1 });
+
+    res.status(200).json({ success: true, count: queues.length, data: queues });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // @route   PUT /api/queues/:id/status
-// @desc    (Operator va Admin uchun) Navbat holatini va raqamni chaqirish amali
+// @desc    Navbat holatini yangilash (Operator va Admin)
 router.put('/:id/status', protect, authorize('operator', 'admin'), async (req, res) => {
-   try {
-      const { status } = req.body; // 'called', 'serving', 'done', 'missed'
-      let updateData = { status };
+  try {
+    const { status } = req.body;
+    let updateData = { status };
 
-      if(status === 'called') updateData.calledAt = Date.now();
-      if(status === 'serving') updateData.servedAt = Date.now();
-      if(status === 'done') updateData.completedAt = Date.now();
+    if (status === 'called') updateData.calledAt = Date.now();
+    if (status === 'serving') updateData.servedAt = Date.now();
+    if (status === 'done') updateData.completedAt = Date.now();
 
-      const queue = await Queue.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
+    const queue = await Queue.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('userId', 'name phone');
 
-      if(!queue) return res.status(404).json({ success: false, error: 'Navbat topilmadi!'});
+    if (!queue) return res.status(404).json({ success: false, error: 'Navbat topilmadi!' });
 
-      res.status(200).json({ success: true, data: queue });
-   } catch(error) {
-      res.status(500).json({ success: false, error: error.message });
-   }
+    // Real-time: status o'zgargani haqida
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`org_${queue.organizationId}`).emit('queue_status_changed', {
+        orgId: queue.organizationId,
+        action: 'status_update',
+        queue
+      });
+      // Display board uchun (called va serving holatlarda)
+      if (status === 'called' || status === 'serving') {
+        io.emit('queue_called', {
+          orgId: queue.organizationId,
+          token: queue.token,
+          service: queue.service,
+          status
+        });
+      }
+    }
+
+    res.status(200).json({ success: true, data: queue });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 module.exports = router;
