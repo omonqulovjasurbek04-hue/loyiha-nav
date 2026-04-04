@@ -6,14 +6,19 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 
-// Config path yuklash
+// Env yuklash
 dotenv.config();
 
-// MongoDB ga ulanish
+const app = express();
+
+// ✅ HEALTHCHECK — MongoDB kutmasdan darhol javob beradi (deploydan oldin tekshiriladi)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ success: true, message: 'Navbat.uz Backend API ishlamoqda' });
+});
+
+// MongoDB ga ulanish (background)
 const connectDB = require('./config/db');
 connectDB();
-
-const app = express();
 
 // Body parser (JSON datani parse qilish)
 app.use(express.json());
@@ -61,10 +66,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// API Routes
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ success: true, message: 'Navbat.uz Backend API barqaror ishlamoqda' });
-});
+// (health endpoint yuqorida aniqlangan)
 
 // Docker / production: frontend/dist → public (bitta serverda SPA)
 const publicPath = path.join(__dirname, 'public');
