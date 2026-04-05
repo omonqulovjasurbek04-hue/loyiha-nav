@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getAccessToken, setTokens, clearTokens } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
+import { getAccessToken, clearTokens } from '@/lib/auth';
 import { getSocket } from '@/lib/socket';
 import api from '@/lib/api';
 
@@ -27,9 +28,8 @@ interface QueueStatus {
 }
 
 export default function Home() {
-  const [step, setStep] = useState<'phone' | 'otp' | 'main'>('phone');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [services, setServices] = useState<{ id: string; name: string }[]>([]);
@@ -37,26 +37,21 @@ export default function Home() {
   const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [countdown, setCountdown] = useState(0);
   const [wsPosition, setWsPosition] = useState<number | null>(null);
   const [wsCalled, setWsCalled] = useState(false);
   const [wsWindow, setWsWindow] = useState<number | null>(null);
 
   useEffect(() => {
     const token = getAccessToken();
-    if (token) {
-      setStep('main');
-      fetchOrganizations();
-      fetchMyTickets();
+    if (!token) {
+      router.replace('/login');
+      return;
     }
+    setReady(true);
+    fetchOrganizations();
+    fetchMyTickets();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [countdown]);
 
   useEffect(() => {
     if (!myTicket) return;
@@ -120,54 +115,9 @@ export default function Home() {
     }
   };
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
-      await api.post('/auth/send-otp', { phone: formattedPhone });
-      setStep('otp');
-      setCountdown(60);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'OTP yuborishda xatolik';
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
-      const res = await api.post('/auth/verify-otp', { phone: formattedPhone, code: otp });
-      const { access_token, refresh_token } = res.data.data;
-      setTokens(access_token, refresh_token);
-      setStep('main');
-      fetchOrganizations();
-      fetchMyTickets();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Tasdiqlashda xatolik';
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleLogout = () => {
     clearTokens();
-    setMyTicket(null);
-    setSelectedOrg(null);
-    setServices([]);
-    setWsPosition(null);
-    setWsCalled(false);
-    setWsWindow(null);
-    setStep('phone');
-    setPhone('');
-    setOtp('');
+    router.replace('/login');
   };
 
   const handleSelectOrg = async (org: Organization) => {
@@ -220,73 +170,11 @@ export default function Home() {
     return 'Kutmoqda...';
   }, [myTicket, wsCalled, wsWindow]);
 
-  if (step === 'phone') {
+  // Token yo'q — redirect bo'layapti, hech narsa ko'rsatma
+  if (!ready) {
     return (
-      <div className="max-w-md mx-auto px-4 py-16">
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-white text-2xl font-bold">N</span>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900">Tizimga Kirish</h2>
-            <p className="text-gray-500 mt-2">Telefon raqamingizni kiriting</p>
-          </div>
-          <form onSubmit={handleSendOtp} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Telefon raqam</label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+998901234567"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                required
-              />
-            </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            <button type="submit" className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50" disabled={loading}>
-              {loading ? 'Yuborilmoqda...' : 'Kod yuborish'}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'otp') {
-    return (
-      <div className="max-w-md mx-auto px-4 py-16">
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Kodni Kiriting</h2>
-            <p className="text-gray-500 mt-2">{phone} raqamiga kod yuborildi</p>
-            {countdown > 0 && <p className="text-sm text-gray-400 mt-1">{countdown} soniya</p>}
-          </div>
-          <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tasdiqlash kodi</label>
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="123456"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-2xl tracking-widest focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                maxLength={6}
-                required
-              />
-            </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            <button type="submit" className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50" disabled={loading}>
-              {loading ? 'Tekshirilmoqda...' : 'Kirish'}
-            </button>
-            <button type="button" onClick={() => setStep('phone')} className="w-full bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors">
-              Orqaga
-            </button>
-          </form>
-          <p className="text-center text-xs text-gray-400 mt-4">
-            Test rejimida kod: <span className="font-mono font-bold">111111</span>
-          </p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -295,7 +183,7 @@ export default function Home() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl font-bold text-gray-900">E-Navbat UZ</h2>
-        <button onClick={handleLogout} className="text-sm text-gray-500 hover:text-red-500">
+        <button onClick={handleLogout} className="text-sm text-gray-500 hover:text-red-500 transition-colors">
           Chiqish
         </button>
       </div>
