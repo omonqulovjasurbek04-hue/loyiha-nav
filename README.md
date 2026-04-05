@@ -16,6 +16,8 @@
   <img src="https://img.shields.io/badge/Socket.IO-4.x-black?logo=socket.io" />
   <img src="https://img.shields.io/badge/TailwindCSS-4-blue?logo=tailwindcss" />
   <img src="https://img.shields.io/badge/Docker-Ready-blue?logo=docker" />
+  <img src="https://img.shields.io/badge/Deploy-Railway-purple?logo=railway" />
+  <img src="https://img.shields.io/badge/License-MIT-yellow" />
 </p>
 
 ---
@@ -24,173 +26,285 @@
 
 - [Loyiha haqida](#-loyiha-haqida)
 - [Texnologiyalar](#-texnologiyalar)
+- [Arxitektura va Tizim Ishlashi](#-arxitektura-va-tizim-ishlashi)
 - [O'rnatish (Installation)](#-ornatish-installation)
+- [Railway'ga Yuklash (Deploy)](#-railwayga-yuklash-deploy)
+- [Docker bilan ishga tushirish](#-docker-bilan-ishga-tushirish)
 - [Loyiha strukturasi](#-loyiha-strukturasi)
 - [API Endpointlar](#-api-endpointlar)
-- [Muhit o'zgaruvchilari](#-muhit-ozgaruvchilari)
+- [Xavfsizlik](#-xavfsizlik)
+- [Test qilish](#-test-qilish)
+- [Xatolarni bartaraf etish](#-xatolarni-bartaraf-etish)
+- [Kelajak rejalari](#-kelajak-rejalari)
 - [Litsenziya](#-litsenziya)
 
 ---
 
 ## 🎯 Loyiha haqida
 
-**Navbat.uz** — bu tashkilotlarda (bank, shifoxona, davlat idoralari) onlayn navbat olish va boshqarish uchun yaratilgan to'liq stack veb-platforma.
+**Navbat.uz** — tashkilotlarda (bank, shifoxona, davlat idoralari) onlayn navbat olish va boshqarish uchun yaratilgan to'liq stack veb-platforma. Tizim an'anaviy qog'ozli va vaqt oluvchi jarayonlarni zamonaviy elektron ko'rinishga (Raqamlashtirish) o'tkazish vazifasini bajaradi.
 
 ### Asosiy imkoniyatlar:
-- 🏢 **Tashkilotlar ro'yxati** — bank, shifoxona, hokimiyat va boshqa kategoriyalar
-- 🎫 **Onlayn navbat olish** — internet orqali navbat band qilish
-- 📊 **Real-vaqt kuzatish** — WebSocket orqali jonli holat
-- 👨‍💼 **Operator paneli** — navbatlarni boshqarish, chaqirish, tugatish
-- 📺 **Zal ekrani (Display Board)** — TV/monitorlarda navbat raqamini ko'rsatish
-- 🛡️ **Admin paneli** — tashkilotlar va foydalanuvchilarni boshqarish
-- 🔐 **JWT autentifikatsiya** — xavfsiz kirish tizimi
+- 🏢 **Tashkilotlar ro'yxati** — bank, shifoxona, hokimiyat va boshqa kategoriyalarni qo'shish va filiallargacha tahlil qilish.
+- 🎫 **Onlayn navbat olish** — internet orqali xohlagan joydan bitta tugma bilan xizmatni band qilish.
+- 📊 **Real-vaqt kuzatish** — WebSocket kuchi orqali kim, qachon, qaysi raqamda uchrashuvga kirishi kabi jonli efir taqdim etilishi.
+- 👨💼 **Operator paneli** — navbatlarni chaqirish, xizmat ko'rsatilganlarni saqlab qolish, bekor qilish imkoniyati.
+- 📺 **Zal ekrani (Display Board)** — yopiq majlislar yohud keng zallardagi TV/monitorlar orqali chaqiriq raqamini hammaga ko'rsatish funksiyasi.
+- 🛡️ **Admin paneli** — tizimdagi barcha statik va dinamik o'zgarishlarni boshqaruvchi bosh markaz.
+- 🔐 **Xavfsizlik tizimi** — JWT tranzaksiyalari asosida ishlovchi himoyalangan maxfiy tunnellar.
+
+### Foydalanuvchi rollari:
+
+| Rol | Imkoniyatlar (Huquqlar) |
+|-----|-------------|
+| **Mijoz** | Ro'yxatdan o'tish, uydan turib navbat olish, jonli navbat siljishini kuzatib borish |
+| **Operator** | Mijozni qabul qilish, keyingi mijozni "chaqirish" ovozi bilan TV orqali chaqirish, navbat holatini "Bajarildi" yoki "To'xtatildi" qilish |
+| **Admin** | Tizim parametrlari, MySQL ma'lumotlar zaxirasi, filiallar(tashkilotlar)ni biriktirish hamda umumboshqaruv |
+| **Display** | Zaldagi Monitor uchun mo'ljallangan maxsus ko'rinish ro'li |
 
 ---
 
 ## 🛠 Texnologiyalar
 
-| Qism | Texnologiya |
+Quyida ilovaning asosi bo'lib xizmat qilgan texnologik stak (MERN -> MySQL):
+
+| Qatlam (Layer) | Texnologiya |
 |------|-------------|
-| **Frontend** | React 19, Vite 8, TailwindCSS 4, React Router 7 |
-| **Backend** | Node.js, Express 5, Socket.IO 4 |
-| **Ma'lumotlar bazasi** | MySQL (Sequelize ORM) |
-| **Autentifikatsiya** | JWT (jsonwebtoken), bcrypt |
-| **Real-vaqt** | Socket.IO (WebSocket) |
-| **HTTP Client** | Axios |
+| **Frontend UI** | React 19, Vite 8, TailwindCSS 4, React Router 7 |
+| **Backend API** | Node.js (v20), Express 5 |
+| **Ma'lumotlar bazasi** | MySQL (Sequelize ORM orqali Relational Data Entity) |
+| **Real-Vaqt aloqasi**| Socket.IO (WebSocket v4) |
+| **Autentifikatsiya** | JSON Web Tokens (JWT), Bcrypt Password Hashing |
 | **Ikonkalar** | Lucide React |
-| **Deploy** | Docker, Nginx, Railway |
+| **Infratuzilma** | Docker, Nginx (frontend routing), Railway.app |
+
+---
+
+## 🏗 Arxitektura va Tizim Ishlashi
+
+Tizim ishlash jarayonining umumiy ko'rinishi **(Mermaid Diagram)**:
+
+```mermaid
+graph TD;
+    Client[Foydalanuvchi/Brouzer] -->|HTTPS REST API| API(Express.js API);
+    Client <-->|WebSocket| Socket(Socket.IO Server);
+    API -->|Sequelize ORM| DB[(MySQL Database)];
+    Socket -->|Real-Time Triggers| API;
+    API -->|Deploy Service| Railway[Railway.app Server];
+```
+
+Ilova **Yagona Konteyner arxitekturasida** qurilgan. Frontend kompyuterda alohida ishlagani bilan, ommaga yuklanganda(Production) u **Nginx** yoki **Express**'ning o'zi orqali bitta `/api` domenida "Single Page Application" sifatda tarqatiladi.
 
 ---
 
 ## 📥 O'rnatish (Installation)
 
-### Talab qilinadigan dasturlar
-- [Node.js](https://nodejs.org/) v18+
-- [MySQL](https://www.mysql.com/) v8+
-- [Git](https://git-scm.com/) v2+
-
-### 1. Loyihani yuklab olish
+### 1-qadam: Resursni yuklab olish
 ```bash
 git clone https://github.com/omonqulovjasurbek04-hue/loyiha-nav.git
 cd loyiha-nav
 ```
 
-### 2. Backend va Frontend paketlarini o'rnatish
+### 2-qadam: Paketlarni o'rnatish
 ```bash
-# Backend paketlar
+# Backend uchun
 cd backend
 npm install
 
-# Frontend paketlar
+# Frontend uchun
 cd ../frontend
 npm install
 ```
 
-### 3. Backend `.env` fayli
-`backend` jildida `.env` qiling:
+### 3-qadam: Muhit parametrlari (Environment Variables)
+`backend` papkasi ichida `.env` qiling:
 ```env
 PORT=5000
-MYSQL_URL=mysql://root:parol@localhost:3306/queue_system
-JWT_SECRET=maxfiy_kalit_uchun_biron_soz
+MYSQL_URL=mysql://root:root@localhost:3306/queue_system
+JWT_SECRET=super_maxfiy_kalit_2026
 CLIENT_URL=http://localhost:5173
 NODE_ENV=development
 ```
 
-*(Kodni yozgan zahoti tizim **navbatlar, bazalar va formalar** kabi jadvallarni o'zi avtomatik yaratadi. Siz qo'lda SQL kod yozmaysiz!)*
+> **Avtomatizatsiya Izohi:** Tizim ishga tushganda `Sequelize` o'zi barcha User, Organization va Queue jadvallarini UUID va Forein Key munosabatlari orqali baza ichida yaratadi. Boshqa hech nima qilish shart emas!
 
-### 4. Ishga tushirish (Local)
-Backend'ni yoqish:
+### 4-qadam: Ishini sinab ko'rish
+Dastlab Backend terminalda ishga tushiriladi:
 ```bash
 cd backend
 npm run dev
 ```
-Frontend'ni yoqish:
+
+Keyin Frontend boshqa terminalda yondiriladi:
 ```bash
 cd frontend
 npm run dev
 ```
-Sayt `http://localhost:5173` da ochiladi.
+
+Shundan so'ng tizim to'liq holatda **`http://localhost:5173`** manzilida kutilganidek ishlaydi.
 
 ---
 
-## 📁 Loyiha strukturasi (To'liq)
+## ☁️ Railway'ga Yuklash (Deploy)
+
+Ushbu Tizim to'g'ridan to'g'ri **Railway.app** bulutli xizmatida ishlab chiqarishga (Production) yo'naltirilgan.
+
+1. **GitHub ulanishi:** Tizim githubga yuklanadi va web asboblar paneli orqali Railway'ga Deploy yuboriladi.
+2. **Data Baza yondirilishi:** Railway plaginlari orasidan "MySQL Database" qo'shilib, uning `MYSQL_URL` URL i nusxalanadi.
+3. **Variables kiritilishi:** Railway.app > Web loyihangiz > Variables bo'limiga kirib quyidagilar ta'minlanadi:
+   - `MYSQL_URL` = (MySQL xizmatidan olingan to'liq manzil)
+   - `CLIENT_URL` = (Sizning ochiq Railway domeningiz misol uchun `https://navbat-uz.up.railway.app`)
+   - `JWT_SECRET` = (Parol yasaluvchi so'z)
+   - `NODE_ENV` = `production`
+4. Shundan so'ng u o'zi `Dockerfile` arxitekturasini taniydi hamda React kodlarini build qilib uzluksiz tarmoqqa uzatadi!
+
+---
+
+## 🐳 Docker bilan ishga tushirish (Offline-Prod)
+
+O'z serveringizda hech nima o'rnatmasdan ishga tushirish uchun, Loyiha root jildida `docker-compose.yml` ishlatiladi:
+
+```yaml
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: my_secure_password
+      MYSQL_DATABASE: queue_system
+    ports:
+      - "3306:3306"
+      
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      PORT: 5000
+      MYSQL_URL: mysql://root:my_secure_password@mysql:3306/queue_system
+      NODE_ENV: production
+    ports:
+      - "5000:5000"
+      - "80:80"
+```
+```bash
+# Faol holda ko'tarish
+docker-compose up -d
+```
+
+---
+
+## 📁 Loyiha strukturasi (Batafsil)
 
 ```
 loyiha-nav/
-├── backend/                    # Backend (Node.js + Express + MySQL)
+├── backend/                    
 │   ├── config/
-│   │   └── db.js               # MySQL (Sequelize) ulanish konfiguratsiyasi
+│   │   └── db.js               # MySQL (Sequelize) xavfsiz Catch fallback bilan
 │   ├── middleware/
-│   │   └── auth.js             # JWT autentifikatsiya himoyasi
+│   │   └── auth.js             # JWT ni header orqali Decode qiluvchi mexanizm
 │   ├── models/
 │   │   ├── index.js            # Sequelize munosabatlar (Relationships) ulagichi
-│   │   ├── User.js             # Foydalanuvchi modeli (Sequelize UUID bilan)
-│   │   ├── Organization.js     # Tashkilot modeli
-│   │   └── Queue.js            # Navbat modeli (FK: userId, organizationId)
+│   │   ├── User.js             # UUID primary key bilan mijoz tuzilmasi
+│   │   ├── Organization.js     
+│   │   └── Queue.js            
 │   ├── routes/
-│   │   ├── auth.js             # Register/Login (Parolni heshlash bcrypt bilan)
-│   │   ├── organizations.js    # Tashkilotlar qo'shish va olish
-│   │   └── queues.js           # Navbatga ism yozdirish + Soket signalizatsiyasi
-│   ├── server.js               # Asosiy Express server va WebSocket ulagichi
-│   └── package.json            # Node modullari va skriptlar
+│   │   ├── auth.js             # Parolni Hesh(Bcrypt)lab beruvchi uzellar
+│   │   ├── organizations.js    # Shular qatorida backend native HTML form ham mavjud! (/add-form)
+│   │   └── queues.js           
+│   └── server.js               # Backend markaziy Express server (REST+Websocket)
 │
-├── frontend/                   # Frontend (React + Vite)
-│   ├── public/                 # Statik rasmlar, logolar
+├── frontend/                   
+│   ├── index.html              # HTML DOM qutisi
 │   ├── src/
-│   │   ├── components/         # Takror ishlatiladigan (UI) elementlari
-│   │   │   ├── Navbar.jsx      
-│   │   │   └── Footer.jsx      
-│   │   ├── pages/              # Asosiy sayt sahifalari
-│   │   │   ├── Home.jsx        # Asosiy kirish
-│   │   │   ├── Login.jsx       # Registratsiya/Login oynasi
-│   │   │   ├── BookQueue.jsx   # Taklifnoma yuboruvchi oyna (Navbat olinadigan uzel)
-│   │   │   ├── MyQueue.jsx     # Mijozlar tarixlari
-│   │   │   ├── admin/Dashboard.jsx # Admin tizimi
-│   │   │   ├── operator/Dashboard.jsx # Operator qabulxonasi
-│   │   │   └── display/Board.jsx  # Katta ekran uchun displey
+│   │   ├── components/         # Takrorlanuvchi Button va Animatsiyali Form komponentlari
+│   │   ├── pages/              
+│   │   │   ├── admin/          # Admin boshqaruv logikasi
+│   │   │   ├── operator/       # Chaqiriq (Call Next) ovozlar logikasi shu yerda 
+│   │   │   └── display/        
 │   │   ├── utils/
-│   │   │   ├── api.js          # Asosiy Axios zapros bazasi (`/api`)
-│   │   │   └── socket.js       # Real-time WebSocket sozlamalari (`socket.io-client`)
-│   │   ├── App.jsx             # Router (yo'l-ko'rsatkich) moduli
-│   │   └── main.jsx            # React root-ni HTML ga inject qilish
-│   ├── index.css               # Vanilla CSS qoidalari
-│   └── vite.config.js          # Local Vite portlari
+│   │   │   ├── api.js          # Axios Interceptors bilan JWT Header generatsiyasi
+│   │   │   └── socket.js       # Auto-reconnection bilan Realtime Socket instance
+│   │   ├── App.jsx             # React Router v6 Sahifa konveeri
+│   │   └── main.jsx            # Ilova injektor 
+│   └── vite.config.js          
 │
-├── Dockerfile                  # Production server uchun portlovchi yagona quti 
-└── README.md                   # Ushbu o'qiyotgan faylingiz
+├── Dockerfile                  # React Ni Build qilib Express ichiga joylovchi Multistage qadam!
+└── README.md
 ```
 
 ---
 
 ## 🔌 API Endpointlar
 
-### 🛡 Autentifikatsiya
-| Metod | Endpoint | Tavsif | Himoya |
-|-------|----------|--------|--------|
-| `POST` | `/api/auth/register` | Yangi mijoz ro'yxatdan o'tishi | ❌ Ochiq |
-| `POST` | `/api/auth/login` | Tizimga profilga kirish | ❌ Ochiq |
+Bu yerda Postman, Thunder Client yoki oddiy fetch amaliyotlari uchun Endpoint lar ko'rinishi aks etgan:
 
-### 🏢 Tashkilotlar
-| Metod | Endpoint | Tavsif | Himoya |
+| Turi | Endpoint | Vazifasi | Himoya Turi |
 |-------|----------|--------|--------|
-| `GET` | `/api/organizations` | Tashkilotlarni o'qish | ❌ |
-| `POST` | `/api/organizations` | Yangi filial qo'shish | 🔐 Admin |
-
-### 🎫 Navbatlar
-| Metod | Endpoint | Tavsif | Himoya |
-|-------|----------|--------|--------|
-| `POST` | `/api/queues/book` | Yangi navbat raqamini olish | 🔐 Auth |
-| `GET` | `/api/queues/my` | Foydalanuvchining hamma navbatlari | 🔐 Auth |
-| `GET` | `/api/queues/org/:orgId` | Bitta tashkilot navbati ro'yxati | 🔐 Op/Admin|
-| `PUT` | `/api/queues/:id/status` | Tizimda chaqirish (`called`/`done`) | 🔐 Op/Admin|
-
-### 📡 WebSocket Eventlar (Socket.IO)
-- `join_org` - Xonaga (filialga) kirish
-- `call_next` - Operatorning chaqirishi (Displey uchun kadr)
-- `queue_called` - Mijozga signal bordi
-- `queue_updated` - Real-vaqt soniyalik yangilanish 
+| `POST` | `/api/auth/register` | Tizimga ro'yxatdan o'tkazish | Ochiq |
+| `POST` | `/api/auth/login` | Tizimga profilga kirish (JWT token beradi)| Ochiq |
+| `GET`  | `/api/organizations` | Tashkilotlarni o'qish | Ochiq |
+| `GET`  | `/api/organizations/add-form` | **HTML Native Backend Form** | Ochiq |
+| `POST` | `/api/organizations` | Yangi tashkilot uzatish | Ochiq |
+| `POST` | `/api/queues/book` | Yangi navbat raqami olish | 🔐 Auth (Bearer) |
+| `GET`  | `/api/queues/my` | Foydalanuvchining shaxsiy tarixlari| 🔐 Auth (Bearer) |
+| `PUT`  | `/api/queues/:id/status`| Holat o'zgartirish (masalan done/passed)| 🔐 Auth (Op) |
+| `GET`  | `/api/health` | Tizimni avariyalarga tekshirish | Ochiq |
 
 ---
+
+## 📡 WebSocket Eventlar (Realtime Tizimi)
+
+Dastur asabni buzadigan Refresh (Sahifani qayta yangilash) amaliyotisiz to'laqonli Socket.IO protokolida ishlaydi:
+
+- **`join_org`**: (Xonaga ulanish) Operator yoki ko'rish paneli ekranga chiqqanda mos orgId signal yuborib izolyatsiyalanadi.
+- **`call_next`**: Operator keyingi foydalanuvchini chaqirgan vaqt o'zi ham xabar tarqatadi ham display bord da "Chaqiriq!" ovozini chaldi.
+- **`queue_updated`**: Kimdir navbat olsa yoki status o'zgarsa tarqaluvchi markaziy Global Event!
+
+---
+
+## 🔒 Xavfsizlik Va Optimizatsiya
+
+Loyihada quyidagi xavfsizlik va tezlik choralari belgilab o'tilgan:
+- **Maxfiy Parollar:** `.env` fayllari Git ignordan o'tqazilib xakerlik buzib kirishlari bartaraf yetilgan. Parollar bazaga Ochiq matnda emas `bcryptjs` aralashuvida shifrlab joylangan.
+- **Single Source API (Optimal!):** Frontend ma'lumotlarni so'rashda asossiz 127.0.0.1 (CORS errorlar olib keluvchi manzillar) ni emas, balki Docker konteyner ishga tushganda o'zining mutloq ichki yo'lagi — `/api` dan foydalanadigan qilib Optimallashtirilgan.
+- **Sequelize Fallback:** `db.js` fayli `MYSQL_URL` taqdim etilmagan vaqtlarda serverni vahima bilan qulatib yubormasligi (Crash qilmaydi) uchun extiyotkor xato beruvchi Maxsus himoya panjarasi bilan yozilgan!
+
+---
+
+## 🚀 Kelajak rejalari
+
+Ushbu kuchli poydevor asosida yana bir qator zo'r funksiyalar kutmoqda:
+- [ ] 📱 **SMS xabarnoma** — Navbat kelyotganini Telegram Bot, Eskiz.uz yoki PlayMobile SMS lari bilan sezintirish!
+- [ ] 📈 **Admin Statistikalari** — Maxsus "Recharts" jadvallari va Dashboard analitika qismi.
+- [ ] 🌍 **Til paketlari (i18n)** — Foydalanuvchilar o'rtasida Rus (Ru) hamda Ingles (En) til paketlari almashtirish.
+- [ ] 🖨️ **Kvitansiya chiptalari** — Infokiosk kabi printerlarga ulanadigan PDF ticket generatsiyalari.
+
+---
+
+## 🤝 Hissa qo'shish (Contributing)
+
+Ushbu Open-Source (oliy o'quv yurtlari amaliyotlari va tijoriy erkinlik uchun yozilgan) loyihada sizning ishtirokingizni xush ko'ramiz!
+
+```bash
+# 1. Klonlang yoki Fork qiling
+# 2. Yangi qismlar qoshib commit qiling
+git add .
+git commit -m "feat(module): Mening qoshgan kodim"
+# 3. Pull Request hosil qiling
+```
+
+---
+
 <p align="center">
+  <strong>Navbat.uz</strong> — Ishingiz bitmasa ham navbatingiz tezroq yetsin! ⏱️<br/>
   Jasurbek Omonqulov — 2026 🚀
+</p>
+
+<p align="center">
+  <a href="https://github.com/omonqulovjasurbek04-hue/loyiha-nav">GitHub</a> •
+  <a href="mailto:omonqulovjasurbek04@gmail.com">Bog'lanish</a> •
+  <a href="https://navbat-uz.up.railway.app">Saytni Ko'rish (Live preview)</a>
 </p>
