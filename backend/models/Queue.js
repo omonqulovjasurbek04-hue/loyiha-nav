@@ -70,6 +70,9 @@ const Queue = sequelize.define('Queue', {
     {
       unique: true,
       fields: ['organizationId', 'date', 'number']
+    },
+    {
+      fields: ['organizationId', 'status']
     }
   ]
 });

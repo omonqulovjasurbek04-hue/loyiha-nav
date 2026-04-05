@@ -6,6 +6,7 @@ const cors = require('cors');
 const http = require('http');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const { Server } = require('socket.io');
 
 dotenv.config();
@@ -22,6 +23,7 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+app.use(compression());
 app.use(express.json());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
@@ -82,7 +84,7 @@ io.on('connection', (socket) => {
 
 const publicPath = path.join(__dirname, 'public');
 if (fs.existsSync(publicPath)) {
-  app.use(express.static(publicPath));
+  app.use(express.static(publicPath, { maxAge: '365d' }));
   app.use((req, res, next) => {
     if (req.method === 'GET' && !req.path.startsWith('/api')) {
       return res.sendFile(path.join(publicPath, 'index.html'));
