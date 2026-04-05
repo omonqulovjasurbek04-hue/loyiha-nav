@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import Redis from 'ioredis';
 import { Queue } from './entities/queue.entity';
 import { Service } from '../organizations/entities/service.entity';
 
@@ -15,7 +13,6 @@ export class QueuesService {
     private readonly queueRepository: Repository<Queue>,
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
-    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   async getQueueStatus(serviceId: string): Promise<{
@@ -23,13 +20,6 @@ export class QueuesService {
     total_issued: number;
     waiting_count: number;
   }> {
-    const cacheKey = `queue:status:${serviceId}`;
-    const cached = await this.redis.get(cacheKey);
-
-    if (cached) {
-      return JSON.parse(cached);
-    }
-
     const today = new Date().toISOString().split('T')[0];
     const queue = await this.queueRepository.findOne({
       where: { service_id: serviceId, date: today as any },
@@ -45,7 +35,6 @@ export class QueuesService {
       waiting_count: queue.total_issued - queue.current_number,
     };
 
-    await this.redis.setex(cacheKey, 10, JSON.stringify(result));
     return result;
   }
 
@@ -58,6 +47,6 @@ export class QueuesService {
   }
 
   async invalidateCache(serviceId: string): Promise<void> {
-    await this.redis.del(`queue:status:${serviceId}`);
+    // Redis olib tashlangani uchun, endi bu joyda kesh o'chirilmaydi
   }
 }

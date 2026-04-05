@@ -7,8 +7,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import Redis from 'ioredis';
 import { Ticket, TicketStatus } from './entities/ticket.entity';
 import { Queue } from './entities/queue.entity';
 import { Service } from '../organizations/entities/service.entity';
@@ -27,7 +25,6 @@ export class TicketsService {
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
     private readonly dataSource: DataSource,
-    @InjectRedis() private readonly redis: Redis,
     private readonly queueGateway: QueueGateway,
     private readonly queuesService: QueuesService,
   ) {}

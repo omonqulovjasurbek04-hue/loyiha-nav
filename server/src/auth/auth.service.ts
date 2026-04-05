@@ -7,9 +7,9 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import Redis from 'ioredis';
 import { User } from '../users/entities/user.entity';
+import { OtpStorage } from './entities/otp.entity';
+import { TokenBlacklist } from './entities/blacklist.entity';
 
 @Injectable()
 export class AuthService {
@@ -21,38 +21,45 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(OtpStorage)
+    private readonly otpRepository: Repository<OtpStorage>,
+    @InjectRepository(TokenBlacklist)
+    private readonly blacklistRepository: Repository<TokenBlacklist>,
     private readonly jwtService: JwtService,
-    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   async sendOtp(phone: string): Promise<{ message: string }> {
-    // Rate limit tekshirish
-    const limitKey = `otp:limit:${phone}`;
-    const attempts = await this.redis.incr(limitKey);
+    let otpRecord = await this.otpRepository.findOne({ where: { phone } });
+    const now = new Date();
 
-    if (attempts === 1) {
-      await this.redis.expire(limitKey, this.OTP_LIMIT_TTL);
+    if (otpRecord) {
+      if (otpRecord.expires_at < now) {
+        // Reset old attempts
+        otpRecord.attempts = 0;
+      } else if (otpRecord.attempts >= this.OTP_LIMIT) {
+        const remainingMinutes = Math.ceil((otpRecord.expires_at.getTime() - now.getTime()) / 60000);
+        throw new BadRequestException({
+          code: 'OTP_LIMIT_EXCEEDED',
+          message: `Ko'p urinish. ${remainingMinutes} daqiqadan so'ng qayta urining`,
+        });
+      }
+    } else {
+      otpRecord = this.otpRepository.create({ phone, attempts: 0 });
     }
 
-    if (attempts > this.OTP_LIMIT) {
-      const ttl = await this.redis.ttl(limitKey);
-      throw new BadRequestException({
-        code: 'OTP_LIMIT_EXCEEDED',
-        message: `Ko'p urinish. ${Math.ceil(ttl / 60)} daqiqadan so'ng qayta urining`,
-      });
-    }
+    // Generate new OTP
+    const otp = process.env.NODE_ENV === 'production'
+      ? Math.floor(100000 + Math.random() * 900000).toString()
+      : '111111';
 
-    // OTP generatsiya (production da 6 raqam, test da 111111)
-    const otp =
-      process.env.NODE_ENV === 'production'
-        ? Math.floor(100000 + Math.random() * 900000).toString()
-        : '111111';
+    otpRecord.code = otp;
+    otpRecord.attempts += 1;
+    // Set limit expiration based on attempts, or just simple OTP TTL if not limited
+    const expiresAt = new Date(now.getTime() + (otpRecord.attempts >= this.OTP_LIMIT ? this.OTP_LIMIT_TTL * 1000 : this.OTP_TTL * 1000));
+    otpRecord.expires_at = expiresAt;
 
-    // Redis ga saqlash
-    const otpKey = `otp:${phone}`;
-    await this.redis.setex(otpKey, this.OTP_TTL, otp);
+    await this.otpRepository.save(otpRecord);
 
-    // SMS yuborish
     await this.sendSms(phone, `E-Navbat: tasdiqlash kodi ${otp}`);
 
     this.logger.log(`OTP yuborildi: ${phone}`);
@@ -63,26 +70,34 @@ export class AuthService {
     phone: string,
     otp: string,
   ): Promise<{ access_token: string; refresh_token: string; user: User }> {
-    // OTP tekshirish
-    const otpKey = `otp:${phone}`;
-    const savedOtp = await this.redis.get(otpKey);
+    const otpRecord = await this.otpRepository.findOne({ where: { phone } });
+    const now = new Date();
 
-    if (!savedOtp) {
+    if (!otpRecord || otpRecord.expires_at < now) {
+      if (otpRecord && otpRecord.expires_at < now && otpRecord.attempts < this.OTP_LIMIT) {
+        // Clear if not rate limited
+        await this.otpRepository.remove(otpRecord);
+      }
       throw new BadRequestException({
         code: 'OTP_EXPIRED',
         message: 'OTP muddati tugagan, qayta so\'rang',
       });
     }
 
-    if (savedOtp !== otp) {
+    if (otpRecord.code !== otp) {
       throw new BadRequestException({
         code: 'INVALID_OTP',
         message: 'Noto\'g\'ri OTP kod',
       });
     }
 
-    // OTP ni o'chirib yuborish (bir martalik)
-    await this.redis.del(otpKey);
+    // Remove valid OTP (keep if rate limited, but invalidate code)
+    if (otpRecord.attempts < this.OTP_LIMIT) {
+      await this.otpRepository.remove(otpRecord);
+    } else {
+      otpRecord.code = ''; // consume it
+      await this.otpRepository.save(otpRecord);
+    }
 
     // Foydalanuvchi topish yoki yaratish
     let user = await this.userRepository.findOne({ where: { phone } });
@@ -100,8 +115,7 @@ export class AuthService {
   async refresh(
     refreshToken: string,
   ): Promise<{ access_token: string; refresh_token: string }> {
-    // Blacklist tekshirish
-    const blacklisted = await this.redis.get(`blacklist:${refreshToken}`);
+    const blacklisted = await this.blacklistRepository.findOne({ where: { token: refreshToken } });
     if (blacklisted) {
       throw new UnauthorizedException({
         code: 'TOKEN_REVOKED',
@@ -124,11 +138,11 @@ export class AuthService {
       }
 
       // Eski refresh token ni blacklist ga qo'shish
-      await this.redis.setex(
-        `blacklist:${refreshToken}`,
-        30 * 24 * 3600,
-        '1',
-      );
+      const blacklistEntry = this.blacklistRepository.create({
+        token: refreshToken,
+        expires_at: new Date(Date.now() + 30 * 24 * 3600 * 1000)
+      });
+      await this.blacklistRepository.save(blacklistEntry);
 
       return this.generateTokens(user);
     } catch {
@@ -140,7 +154,11 @@ export class AuthService {
   }
 
   async logout(token: string): Promise<{ message: string }> {
-    await this.redis.setex(`blacklist:${token}`, 15 * 60, '1');
+    const blacklistEntry = this.blacklistRepository.create({
+      token,
+      expires_at: new Date(Date.now() + 15 * 60 * 1000)
+    });
+    await this.blacklistRepository.save(blacklistEntry);
     return { message: 'Muvaffaqiyatli chiqildi' };
   }
 

@@ -5,6 +5,9 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { OtpStorage } from './entities/otp.entity';
+import { TokenBlacklist } from './entities/blacklist.entity';
 
 @Module({
   imports: [
@@ -14,6 +17,7 @@ import { UsersModule } from '../users/users.module';
       secret: process.env.JWT_SECRET || 'default-secret',
       signOptions: { expiresIn: 900 }, // 15 daqiqa
     }),
+    TypeOrmModule.forFeature([OtpStorage, TokenBlacklist]),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
