@@ -1,11 +1,45 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Users, UserCheck, UserX, Clock, Bell,
-  RefreshCw, CheckCircle2, Play, AlertTriangle, Loader2, LogOut
+  RefreshCw, CheckCircle2, Play, AlertTriangle, Loader2, LogOut, Volume2
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../utils/api'
 import socket from '../../utils/socket'
+
+// Synthetic audio — "Ding-Dong" ovozi
+function playDingDong() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+
+    // Ding (yuqori nota)
+    const ding = ctx.createOscillator()
+    const dingGain = ctx.createGain()
+    ding.type = 'sine'
+    ding.frequency.setValueAtTime(830, ctx.currentTime)
+    dingGain.gain.setValueAtTime(0.5, ctx.currentTime)
+    dingGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6)
+    ding.connect(dingGain).connect(ctx.destination)
+    ding.start(ctx.currentTime)
+    ding.stop(ctx.currentTime + 0.6)
+
+    // Dong (past nota)
+    const dong = ctx.createOscillator()
+    const dongGain = ctx.createGain()
+    dong.type = 'sine'
+    dong.frequency.setValueAtTime(620, ctx.currentTime + 0.35)
+    dongGain.gain.setValueAtTime(0.5, ctx.currentTime + 0.35)
+    dongGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.1)
+    dong.connect(dongGain).connect(ctx.destination)
+    dong.start(ctx.currentTime + 0.35)
+    dong.stop(ctx.currentTime + 1.1)
+
+    // AudioContext ni tozalash
+    setTimeout(() => ctx.close(), 2000)
+  } catch (e) {
+    console.warn('Audio chalishda xatolik:', e)
+  }
+}
 
 export default function OperatorDashboard() {
   const navigate = useNavigate()
@@ -84,16 +118,19 @@ export default function OperatorDashboard() {
     try {
       // Joriy xizmat ko'rsatilayotganini tugatish
       if (currentServing) {
-        await api.put(`/queues/${currentServing._id}/status`, { status: 'done' })
+        await api.put(`/queues/${currentServing.id}/status`, { status: 'done' })
       }
       // Keyingisini chaqirish
-      const { data } = await api.put(`/queues/${nextQueue._id}/status`, { status: 'called' })
+      const { data } = await api.put(`/queues/${nextQueue.id}/status`, { status: 'called' })
       if (data.success) {
+        // 🔔 Ding-dong ovozi chalinadi
+        playDingDong()
+
         socket.emit('call_next', {
           orgId,
           token: nextQueue.token,
           service: nextQueue.service,
-          queueId: nextQueue._id
+          queueId: nextQueue.id
         })
         socket.emit('queue_updated', { orgId })
         await fetchQueues()
@@ -110,7 +147,7 @@ export default function OperatorDashboard() {
     if (!currentServing || actionLoading) return
     setActionLoading(true)
     try {
-      await api.put(`/queues/${currentServing._id}/status`, { status: 'done' })
+      await api.put(`/queues/${currentServing.id}/status`, { status: 'done' })
       socket.emit('queue_updated', { orgId })
       setCurrentServing(null)
       await fetchQueues()
@@ -126,7 +163,7 @@ export default function OperatorDashboard() {
     if (!currentServing || actionLoading) return
     setActionLoading(true)
     try {
-      await api.put(`/queues/${currentServing._id}/status`, { status: 'missed' })
+      await api.put(`/queues/${currentServing.id}/status`, { status: 'missed' })
       socket.emit('queue_updated', { orgId })
       setCurrentServing(null)
       await fetchQueues()
@@ -215,9 +252,9 @@ export default function OperatorDashboard() {
                     <div className="text-slate-300 font-medium text-lg bg-slate-800/50 inline-block px-4 py-1.5 rounded-lg border border-slate-700/50">
                       {currentServing.service}
                     </div>
-                    {currentServing.userId && (
+                    {currentServing.user && (
                       <div className="mt-2 text-slate-400 text-sm">
-                        Mijoz: {currentServing.userId.name} — {currentServing.userId.phone}
+                        Mijoz: {currentServing.user.name} — {currentServing.user.phone}
                       </div>
                     )}
                   </div>
@@ -304,7 +341,7 @@ export default function OperatorDashboard() {
               ) : (
                 queues.map((q) => (
                   <div
-                    key={q._id}
+                    key={q.id}
                     className={`p-4 rounded-xl border flex items-center justify-between transition-colors ${
                       q.status === 'called' || q.status === 'serving'
                         ? 'bg-indigo-500/10 border-indigo-500/30 shadow-[inset_4px_0_0_0_#6366f1]'
@@ -327,7 +364,7 @@ export default function OperatorDashboard() {
                         </div>
                         <div className="text-xs text-slate-500 flex items-center gap-1">
                           <Clock className="w-3 h-3" /> {q.bookedTime}
-                          {q.userId && ` — ${q.userId.name}`}
+                          {q.user && ` — ${q.user.name}`}
                         </div>
                       </div>
                     </div>

@@ -1,0 +1,103 @@
+{
+  "clientName": "Thunder Client",
+  "collectionName": "Navbat.uz API Tests",
+  "collectionId": "1a2b3c4d-5e6f-7g8h-9i0j",
+  "dateExported": "2026-04-05T07:40:00.000Z",
+  "version": "1.2",
+  "folders": [],
+  "requests": [
+    {
+      "_id": "req-1",
+      "colId": "1a2b3c4d-5e6f-7g8h-9i0j",
+      "name": "1. Health Check",
+      "url": "http://localhost:5000/api/health",
+      "method": "GET",
+      "sortNum": 10000,
+      "created": "2026-04-05T07:40:00.000Z",
+      "modified": "2026-04-05T07:40:00.000Z",
+      "headers": []
+    },
+    {
+      "_id": "req-2",
+      "colId": "1a2b3c4d-5e6f-7g8h-9i0j",
+      "name": "2. Get Organizations",
+      "url": "http://localhost:5000/api/organizations",
+      "method": "GET",
+      "sortNum": 20000,
+      "created": "2026-04-05T07:40:00.000Z",
+      "modified": "2026-04-05T07:40:00.000Z",
+      "headers": []
+    },
+    {
+      "_id": "req-3",
+      "colId": "1a2b3c4d-5e6f-7g8h-9i0j",
+      "name": "3. Add Organization",
+      "url": "http://localhost:5000/api/organizations",
+      "method": "POST",
+      "sortNum": 30000,
+      "created": "2026-04-05T07:40:00.000Z",
+      "modified": "2026-04-05T07:40:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"name\": \"Xalq Banki\",\n  \"category\": \"bank\",\n  \"branch\": \"Yashnobod filiali\",\n  \"address\": \"Toshkent\",\n  \"phone\": \"+998711234567\"\n}"
+      }
+    },
+    {
+      "_id": "req-4",
+      "colId": "1a2b3c4d-5e6f-7g8h-9i0j",
+      "name": "4. Register User",
+      "url": "http://localhost:5000/api/auth/register",
+      "method": "POST",
+      "sortNum": 40000,
+      "created": "2026-04-05T07:40:00.000Z",
+      "modified": "2026-04-05T07:40:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"name\": \"Ali Valiyev\",\n  \"phone\": \"+998901234567\",\n  \"password\": \"123456\",\n  \"role\": \"client\"\n}"
+      }
+    },
+    {
+      "_id": "req-5",
+      "colId": "1a2b3c4d-5e6f-7g8h-9i0j",
+      "name": "5. Login",
+      "url": "http://localhost:5000/api/auth/login",
+      "method": "POST",
+      "sortNum": 50000,
+      "created": "2026-04-05T07:40:00.000Z",
+      "modified": "2026-04-05T07:40:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"phone\": \"+998901234567\",\n  \"password\": \"123456\"\n}"
+      }
+    },
+    {
+      "_id": "req-6",
+      "colId": "1a2b3c4d-5e6f-7g8h-9i0j",
+      "name": "6. Get Stats (orgId kerak)",
+      "url": "http://localhost:5000/api/stats/org/ORGANIZATION_ID_HERE",
+      "method": "GET",
+      "sortNum": 60000,
+      "created": "2026-04-05T07:40:00.000Z",
+      "modified": "2026-04-05T07:40:00.000Z",
+      "headers": []
+    }
+  ]
+}

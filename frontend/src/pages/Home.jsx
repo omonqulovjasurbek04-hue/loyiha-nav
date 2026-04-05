@@ -1,24 +1,37 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight, Clock, Users, Shield, Zap, Building2, Heart, Landmark,
-  GraduationCap, Banknote, CheckCircle2, Star, ChevronRight, Timer
+  GraduationCap, Banknote, CheckCircle2, Star, ChevronRight, Timer, Search
 } from 'lucide-react'
+import api from '../utils/api'
 
-const categories = [
-  { icon: Banknote, label: 'Banklar', count: 24, color: 'from-emerald-500 to-teal-600', desc: 'Kredit, karta, hisob' },
-  { icon: Heart, label: 'Shifoxonalar', count: 18, color: 'from-rose-500 to-pink-600', desc: 'Shifokor, tahlil, kasalxona' },
-  { icon: Landmark, label: 'Davlat xizmatlari', count: 32, color: 'from-blue-500 to-cyan-600', desc: 'Pasport, guvohnoma, litsenziya' },
-  { icon: Building2, label: 'Hokimiyat', count: 15, color: 'from-amber-500 to-orange-600', desc: 'Qabulxona, ariza, murojaat' },
-  { icon: GraduationCap, label: 'Ta\'lim', count: 12, color: 'from-violet-500 to-purple-600', desc: 'Universitet, maktab, kurslar' },
-  { icon: Shield, label: 'Soliq', count: 8, color: 'from-indigo-500 to-blue-600', desc: 'Soliq hisoboti, maslahat' },
-]
+const categoryIcons = {
+  bank: Banknote,
+  hospital: Heart,
+  government: Landmark,
+  hokimiyat: Building2,
+  education: GraduationCap,
+  soliq: Shield,
+}
 
-const stats = [
-  { value: '50+', label: 'Tashkilotlar', icon: Building2 },
-  { value: '10K+', label: 'Foydalanuvchilar', icon: Users },
-  { value: '99.9%', label: 'Ishonchlilik', icon: Shield },
-  { value: '3 daq', label: "O'rtacha kutish", icon: Timer },
-]
+const categoryColors = {
+  bank: 'from-emerald-500 to-teal-600',
+  hospital: 'from-rose-500 to-pink-600',
+  government: 'from-blue-500 to-cyan-600',
+  hokimiyat: 'from-amber-500 to-orange-600',
+  education: 'from-violet-500 to-purple-600',
+  soliq: 'from-indigo-500 to-blue-600',
+}
+
+const categoryLabels = {
+  bank: 'Bank',
+  hospital: 'Shifoxona',
+  government: 'Davlat idorasi',
+  hokimiyat: 'Hokimiyat',
+  education: "Ta'lim",
+  soliq: 'Soliq',
+}
 
 const features = [
   {
@@ -43,7 +56,71 @@ const features = [
   }
 ]
 
+// Skeleton komponent
+function SkeletonCard() {
+  return (
+    <div className="glass rounded-2xl p-6 animate-pulse">
+      <div className="flex items-start justify-between mb-4">
+        <div className="w-14 h-14 rounded-2xl bg-slate-700/60"></div>
+        <div className="w-5 h-5 rounded bg-slate-700/40"></div>
+      </div>
+      <div className="h-5 bg-slate-700/60 rounded w-3/4 mb-2"></div>
+      <div className="h-4 bg-slate-700/40 rounded w-1/2 mb-3"></div>
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-2 rounded-full bg-slate-700/60"></div>
+        <div className="h-3 bg-slate-700/40 rounded w-20"></div>
+      </div>
+    </div>
+  )
+}
+
 export default function Home() {
+  const [organizations, setOrganizations] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  // API'dan tashkilotlarni yuklash
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        const { data } = await api.get('/organizations')
+        if (data.success) {
+          setOrganizations(data.data)
+        }
+      } catch (error) {
+        console.error('Tashkilotlarni yuklashda xatolik:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchOrganizations()
+  }, [])
+
+  // Tashkilotlarni kategoriya bo'yicha guruhlash
+  const groupedByCategory = organizations.reduce((acc, org) => {
+    const cat = org.category || 'other'
+    if (!acc[cat]) acc[cat] = []
+    acc[cat].push(org)
+    return acc
+  }, {})
+
+  // Qidiruvga mos tashkilotlar
+  const filteredOrgs = searchQuery.trim()
+    ? organizations.filter(org =>
+        org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (org.branch && org.branch.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (org.address && org.address.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : []
+
+  // Statistika — haqiqiy bazadagi raqamlar
+  const stats = [
+    { value: `${organizations.length}+`, label: 'Tashkilotlar', icon: Building2 },
+    { value: '10K+', label: 'Foydalanuvchilar', icon: Users },
+    { value: '99.9%', label: 'Ishonchlilik', icon: Shield },
+    { value: '3 daq', label: "O'rtacha kutish", icon: Timer },
+  ]
+
   return (
     <div className="pt-18">
       {/* Hero Section */}
@@ -169,7 +246,65 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Categories Section */}
+      {/* Search Section */}
+      <section className="py-10 relative">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="glass rounded-2xl p-2 flex items-center gap-3 border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
+            <Search className="w-6 h-6 text-indigo-400 ml-4 flex-shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tashkilot yoki filial nomini qidirish..."
+              className="flex-1 bg-transparent border-none outline-none text-white placeholder-slate-400 text-lg py-3"
+              id="search-organizations"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-slate-400 hover:text-white transition-colors mr-4 text-sm"
+              >
+                Tozalash
+              </button>
+            )}
+          </div>
+
+          {/* Qidiruv natijalari */}
+          {searchQuery.trim() && (
+            <div className="mt-4 glass rounded-2xl overflow-hidden border border-indigo-500/10 max-h-80 overflow-y-auto custom-scrollbar">
+              {filteredOrgs.length === 0 ? (
+                <div className="p-6 text-center text-slate-400">
+                  <Search className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                  "{searchQuery}" bo'yicha hech narsa topilmadi
+                </div>
+              ) : (
+                filteredOrgs.map((org) => {
+                  const Icon = categoryIcons[org.category] || Building2
+                  const color = categoryColors[org.category] || 'from-slate-500 to-slate-600'
+                  return (
+                    <Link
+                      key={org.id}
+                      to={`/navbat-olish?org=${org.id}`}
+                      className="flex items-center gap-4 p-4 hover:bg-slate-800/50 transition-colors border-b border-slate-700/30 last:border-b-0"
+                    >
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0`}>
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-white font-medium truncate">{org.name}</div>
+                        <div className="text-slate-400 text-sm truncate">{org.branch} — {org.address}</div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                    </Link>
+                  )
+                })
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Categories Section — haqiqiy bazadan */}
       <section className="py-20 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
@@ -181,29 +316,49 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.map((cat, i) => (
-              <Link
-                key={i}
-                to="/tashkilotlar"
-                className="glass rounded-2xl p-6 card-hover group cursor-pointer"
-                style={{ animationDelay: `${i * 0.1}s` }}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <cat.icon className="w-7 h-7 text-white" />
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all duration-300" />
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Object.entries(groupedByCategory).map(([cat, orgs], i) => {
+                const Icon = categoryIcons[cat] || Building2
+                const color = categoryColors[cat] || 'from-slate-500 to-slate-600'
+                const label = categoryLabels[cat] || cat
+                return (
+                  <Link
+                    key={cat}
+                    to="/tashkilotlar"
+                    className="glass rounded-2xl p-6 card-hover group cursor-pointer"
+                    style={{ animationDelay: `${i * 0.1}s` }}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        <Icon className="w-7 h-7 text-white" />
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all duration-300" />
+                    </div>
+                    <h3 className="text-white font-semibold text-lg mb-1">{label}</h3>
+                    <p className="text-slate-400 text-sm mb-3">
+                      {orgs.slice(0, 3).map(o => o.name).join(', ')}
+                      {orgs.length > 3 ? '...' : ''}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                      <span className="text-slate-500 text-xs">{orgs.length} tashkilot</span>
+                    </div>
+                  </Link>
+                )
+              })}
+              {Object.keys(groupedByCategory).length === 0 && !loading && (
+                <div className="col-span-3 text-center py-16 text-slate-500">
+                  <Building2 className="w-16 h-16 mx-auto mb-4 text-slate-600" />
+                  <p className="text-xl">Hozircha tashkilotlar mavjud emas</p>
                 </div>
-                <h3 className="text-white font-semibold text-lg mb-1">{cat.label}</h3>
-                <p className="text-slate-400 text-sm mb-3">{cat.desc}</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                  <span className="text-slate-500 text-xs">{cat.count} tashkilot</span>
-                </div>
-              </Link>
-            ))}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
