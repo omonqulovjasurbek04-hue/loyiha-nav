@@ -11,7 +11,7 @@ RUN npm ci --only=production=false
 
 COPY server/ server/
 COPY client/ client/
-COPY tsconfig.json nest-cli.json entrypoint.sh ./
+COPY tsconfig.json nest-cli.json entrypoint.sh Caddyfile* ./
 
 # Server build
 RUN npx nest build
@@ -29,7 +29,7 @@ RUN cd client && npx next build
 FROM node:20-alpine AS production
 WORKDIR /app
 
-RUN apk add --no-cache tini
+RUN apk add --no-cache tini caddy
 
 # Backend
 COPY --from=builder /app/server/dist ./backend/dist
@@ -41,6 +41,7 @@ COPY --from=builder /app/client/.next/static ./frontend/client/.next/static
 COPY --from=builder /app/client/public ./frontend/client/public
 
 COPY entrypoint.sh ./entrypoint.sh
+COPY Caddyfile ./Caddyfile
 RUN chmod +x ./entrypoint.sh
 
 EXPOSE 5000 3000
