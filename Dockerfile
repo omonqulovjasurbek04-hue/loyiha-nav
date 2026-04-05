@@ -37,8 +37,8 @@ COPY --from=builder /app/node_modules ./node_modules
 
 # Frontend
 COPY --from=builder /app/client/.next/standalone ./frontend
-COPY --from=builder /app/client/.next/static ./frontend/.next/static
-COPY --from=builder /app/client/public ./frontend/public
+COPY --from=builder /app/client/.next/static ./frontend/client/.next/static
+COPY --from=builder /app/client/public ./frontend/client/public
 
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh

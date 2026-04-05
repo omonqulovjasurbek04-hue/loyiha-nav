@@ -7,7 +7,7 @@ node dist/main.js &
 BACKEND_PID=$!
 
 echo "▶ Frontend ishga tushmoqda (port 3000)..."
-cd /app/frontend
+cd /app/frontend/client
 PORT=3000 node server.js &
 FRONTEND_PID=$!
 
