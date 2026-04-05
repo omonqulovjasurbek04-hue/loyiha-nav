@@ -2,13 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
-  compress: true, // Enable gzip/brotli compression
-  // @ts-ignore
-  devIndicators: {
-    appIsrStatus: false,
-    buildActivity: false,
-    buildActivityPosition: 'bottom-right'
-  },
+  compress: true,
+  devIndicators: false as any,
 };
 
 export default nextConfig;
