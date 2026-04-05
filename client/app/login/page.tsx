@@ -1,97 +1,143 @@
-"use client";
+'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { getAccessToken, setTokens } from '@/lib/auth';
+import api from '@/lib/api';
 
 export default function LoginPage() {
-  const [step, setStep] = useState<1 | 2>(1);
+  const router = useRouter();
+  const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('+998');
   const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [countdown, setCountdown] = useState(0);
 
-  const sendOtp = (e: React.FormEvent) => {
+  useEffect(() => {
+    const token = getAccessToken();
+    if (token) {
+      router.push('/');
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate OTP loading
-    setTimeout(() => {
-      setStep(2);
-    }, 1000);
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/auth/send-otp', { phone });
+      setStep('otp');
+      setCountdown(60);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'OTP yuborishda xatolik';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const verifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate Login
-    alert("Tizimga kirdingiz!");
-    window.location.href = '/';
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.post('/auth/verify-otp', { phone, code });
+      const { access_token, refresh_token } = res.data.data;
+      setTokens(access_token, refresh_token);
+      router.push('/');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Tasdiqlashda xatolik';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex-1 flex items-center justify-center p-6">
-      <div className="glass-card max-w-md w-full animate-slide-up relative overflow-hidden">
-        {/* Dekorativ elementlar */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-violet-500/20 blur-3xl rounded-full -translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
-        
-        <div className="text-center mb-8 relative z-10">
-           <div className="w-16 h-16 mx-auto bg-gradient-to-tr from-indigo-500 to-violet-500 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-4 animate-float cursor-pointer">
-              <span className="text-3xl">🔐</span>
-           </div>
-           <h1 className="text-3xl font-bold text-white mb-2">Xush Kelibsiz</h1>
-           <p className="text-gray-400 text-sm">
-             Navbat tizimidan to'liq foydalanish uchun tizimga kiring
-           </p>
+      <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 mx-auto bg-indigo-600 rounded-2xl flex items-center justify-center mb-4">
+            <span className="text-3xl">🔐</span>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Xush Kelibsiz</h1>
+          <p className="text-gray-500 text-sm">
+            Navbat tizimidan to'liq foydalanish uchun tizimga kiring
+          </p>
         </div>
 
-        {step === 1 ? (
-          <form onSubmit={sendOtp} className="space-y-6 relative z-10">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300 ml-1">Telefon raqamingiz</label>
-              <input 
-                type="text" 
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg mb-4 text-sm">
+            {error}
+          </div>
+        )}
+
+        {step === 'phone' ? (
+          <form onSubmit={handleSendOtp} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Telefon raqamingiz</label>
+              <input
+                type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="+998 90 123 45 67" 
-                className="input-glass text-lg tracking-wider font-medium"
+                placeholder="+998901234567"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-lg"
                 required
               />
             </div>
-            <button type="submit" className="btn-primary w-full shadow-xl">
-              Kodni Olish
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Yuborilmoqda...' : 'Kodni Olish'}
             </button>
-            <p className="text-center text-xs text-gray-500 mt-4">
-              Davom etish orqali <a href="#" className="text-primary hover:underline">Foydalanish shartlariga</a> rozi bo'lasiz.
-            </p>
           </form>
         ) : (
-          <form onSubmit={verifyOtp} className="space-y-6 relative z-10">
-            <div className="space-y-2 text-center">
-              <label className="text-sm font-medium text-gray-300">
-                <span className="text-primary font-bold">{phone}</span> raqamiga yuborilgan 5 xonali SMS kodni kiriting
+          <form onSubmit={handleVerifyOtp} className="space-y-6">
+            <div className="text-center">
+              <label className="block text-sm text-gray-600 mb-2">
+                <span className="font-bold text-indigo-600">{phone}</span> raqamiga yuborilgan kodni kiriting
               </label>
-              <input 
-                type="text" 
+              {countdown > 0 && <p className="text-xs text-gray-400">{countdown} soniya qoldi</p>}
+              <input
+                type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="• • • • •" 
-                maxLength={5}
-                className="input-glass text-center text-3xl tracking-[1em] font-bold mt-4"
+                placeholder="123456"
+                maxLength={6}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-3xl tracking-widest focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none mt-4"
                 required
                 autoFocus
               />
             </div>
-            
-            <div className="pt-2">
-               <button type="submit" className="btn-primary w-full shadow-xl">
-                 Tizimga Kirish
-               </button>
-            </div>
-            
-            <div className="text-center mt-4">
-              <button 
-                type="button" 
-                onClick={() => setStep(1)}
-                className="text-sm text-gray-400 hover:text-white transition-colors"
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Tekshirilmoqda...' : 'Tizimga Kirish'}
+            </button>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setStep('phone')}
+                className="text-sm text-gray-500 hover:text-indigo-600 transition-colors"
               >
                 Raqamni o'zgartirish
               </button>
             </div>
+            <p className="text-center text-xs text-gray-400 mt-4">
+              Test rejimida kod: <span className="font-mono font-bold">111111</span>
+            </p>
           </form>
         )}
       </div>

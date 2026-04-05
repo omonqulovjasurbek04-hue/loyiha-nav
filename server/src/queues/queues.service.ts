@@ -1,4 +1,63 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
+import { Queue } from './entities/queue.entity';
+import { Service } from '../organizations/entities/service.entity';
 
 @Injectable()
-export class QueuesService {}
+export class QueuesService {
+  private readonly logger = new Logger(QueuesService.name);
+
+  constructor(
+    @InjectRepository(Queue)
+    private readonly queueRepository: Repository<Queue>,
+    @InjectRepository(Service)
+    private readonly serviceRepository: Repository<Service>,
+    @InjectRedis() private readonly redis: Redis,
+  ) {}
+
+  async getQueueStatus(serviceId: string): Promise<{
+    current_number: number;
+    total_issued: number;
+    waiting_count: number;
+  }> {
+    const cacheKey = `queue:status:${serviceId}`;
+    const cached = await this.redis.get(cacheKey);
+
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const queue = await this.queueRepository.findOne({
+      where: { service_id: serviceId, date: today as any },
+    });
+
+    if (!queue) {
+      return { current_number: 0, total_issued: 0, waiting_count: 0 };
+    }
+
+    const result = {
+      current_number: queue.current_number,
+      total_issued: queue.total_issued,
+      waiting_count: queue.total_issued - queue.current_number,
+    };
+
+    await this.redis.setex(cacheKey, 10, JSON.stringify(result));
+    return result;
+  }
+
+  async getEstimatedWait(serviceId: string): Promise<{ minutes: number }> {
+    const status = await this.getQueueStatus(serviceId);
+    const service = await this.serviceRepository.findOne({ where: { id: serviceId } });
+    const duration = service?.duration_minutes || 15;
+    const minutes = Math.max(0, status.waiting_count) * duration;
+    return { minutes };
+  }
+
+  async invalidateCache(serviceId: string): Promise<void> {
+    await this.redis.del(`queue:status:${serviceId}`);
+  }
+}

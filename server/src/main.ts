@@ -11,11 +11,13 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
-  // Xavfsizlik headerlar (XSS, clickjacking himoyasi)
   app.use(helmet());
 
-  // CORS sozlash — faqat ruxsat etilgan frontend dan
-  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3001';
+  // Load root .env for CORS default
+  if (process.env.NODE_ENV !== 'production' && !process.env.CORS_ORIGIN) {
+    process.env.CORS_ORIGIN = 'http://localhost:3000';
+  }
+  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
   app.enableCors({
     origin: corsOrigin,
     credentials: true,
@@ -23,13 +25,10 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  // Socket.IO CORS ham to'g'ri sozlanishi kerak
   app.useWebSocketAdapter(new IoAdapter(app));
 
-  // Global prefix: /api
   app.setGlobalPrefix('api');
 
-  // Global ValidationPipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -38,31 +37,37 @@ async function bootstrap() {
     }),
   );
 
-  // Global HttpExceptionFilter
   app.useGlobalFilters(new HttpExceptionFilter());
-
-  // Global Response Interceptor
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  // Swagger sozlash — /api/docs da
-  const config = new DocumentBuilder()
-    .setTitle('E-Navbat UZ API')
-    .setDescription('O\'zbekiston uchun elektron navbat olish tizimi API')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addTag('auth', 'Autentifikatsiya')
-    .addTag('organizations', 'Idoralar')
-    .addTag('tickets', 'Navbat chiptalari')
-    .addTag('queue', 'Jonli navbat')
-    .addTag('users', 'Foydalanuvchilar')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('E-Navbat UZ API')
+      .setDescription("O'zbekiston uchun elektron navbat olish tizimi API")
+      .setVersion('1.0')
+      .addBearerAuth()
+      .addTag('auth', 'Autentifikatsiya')
+      .addTag('organizations', 'Idoralar')
+      .addTag('tickets', 'Navbat chiptalari')
+      .addTag('queue', 'Jonli navbat')
+      .addTag('users', 'Foydalanuvchilar')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
+  app.getHttpAdapter().get('/api/health', (req, res) => {
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+    });
+  });
+
+  const port = process.env.PORT || 5000;
+  await app.listen(port, '0.0.0.0');
   logger.log(`E-Navbat API ishga tushdi: http://localhost:${port}`);
-  logger.log(`Swagger docs: http://localhost:${port}/api/docs`);
+  logger.log(`Health check: http://localhost:${port}/api/health`);
   logger.log(`CORS origin: ${corsOrigin}`);
 }
 bootstrap();

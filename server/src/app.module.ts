@@ -3,44 +3,70 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { RedisModule } from '@nestjs-modules/ioredis';
 import { UsersModule } from './users/users.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { QueuesModule } from './queues/queues.module';
 import { AuthModule } from './auth/auth.module';
-import databaseConfig from './config/database.config';
-import redisConfig from './config/redis.config';
+import { NotificationsModule } from './notifications/notifications.module';
+import { OperatorsModule } from './operators/operators.module';
+import { User } from './users/entities/user.entity';
+import { Organization } from './organizations/entities/organization.entity';
+import { Service } from './organizations/entities/service.entity';
+import { Queue } from './queues/entities/queue.entity';
+import { Ticket } from './queues/entities/ticket.entity';
+import { Operator } from './users/entities/operator.entity';
+import { Notification } from './users/entities/notification.entity';
+import * as path from 'path';
 
 @Module({
   imports: [
-    // Environment sozlash
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: process.env.NODE_ENV === 'production'
-        ? '.env.production'
-        : '.env',
-      load: [databaseConfig, redisConfig],
+        ? path.resolve(process.cwd(), '.env.production')
+        : path.resolve(process.cwd(), '.env'),
     }),
 
-    // Database ulanish — production da DATABASE_URL, dev da alohida parametrlar
+    RedisModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        const redisUrl = configService.get<string>('REDIS_URL') || 'redis://localhost:6379';
+        const isProduction = configService.get<string>('NODE_ENV') === 'production';
+        return {
+          type: 'single',
+          url: redisUrl,
+          options: {
+            retryStrategy: (times: number) => {
+              if (times > 3) return null;
+              return 1000;
+            },
+            maxRetriesPerRequest: isProduction ? 3 : null,
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
+
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const isProduction = configService.get<string>('NODE_ENV') === 'production';
         const databaseUrl = configService.get<string>('DATABASE_URL');
 
-        // Production da DATABASE_URL ishlatiladi (Railway beradi)
         if (databaseUrl) {
           return {
             type: 'postgres' as const,
             url: databaseUrl,
             ssl: isProduction ? { rejectUnauthorized: false } : false,
-            entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            synchronize: !isProduction, // Production da false — migration ishlat!
+            entities: [User, Organization, Service, Queue, Ticket, Operator, Notification],
+            synchronize: !isProduction,
             logging: !isProduction,
+            retryAttempts: 3,
+            retryDelay: 3000,
           };
         }
 
-        // Development da alohida parametrlar
         return {
           type: 'postgres' as const,
           host: configService.get<string>('DB_HOST', 'localhost'),
@@ -48,15 +74,16 @@ import redisConfig from './config/redis.config';
           username: configService.get<string>('DB_USER', 'postgres'),
           password: configService.get<string>('DB_PASSWORD', 'postgres'),
           database: configService.get<string>('DB_NAME', 'enavbat'),
-          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          entities: [User, Organization, Service, Queue, Ticket, Operator, Notification],
           synchronize: true,
-          logging: true,
+          logging: false,
+          retryAttempts: 3,
+          retryDelay: 3000,
         };
       },
       inject: [ConfigService],
     }),
 
-    // Rate limiting: 100 so'rov / 1 daqiqa
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
@@ -64,14 +91,14 @@ import redisConfig from './config/redis.config';
       },
     ]),
 
-    // Modullar
+    NotificationsModule,
+    AuthModule,
     UsersModule,
     OrganizationsModule,
     QueuesModule,
-    AuthModule,
+    OperatorsModule,
   ],
   providers: [
-    // Global rate limit guard
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

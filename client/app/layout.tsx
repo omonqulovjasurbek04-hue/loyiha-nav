@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "E-Navbat | Online Tizim",
-  description: "Davlat va nodavlat idoralari uchun zamonaviy online navbat olish tizimi.",
+  title: "E-Navbat UZ",
+  description: "O'zbekiston uchun elektron navbat olish tizimi",
 };
 
 export default function RootLayout({
@@ -16,44 +16,32 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uz">
-      <body className={`${inter.className} min-h-screen relative`}>
-        {/* Orqa fon bezaklari (Glow effect) */}
-        <div className="glow top-20 left-20"></div>
-        <div className="glow bottom-20 right-20 bg-violet-600"></div>
-
-        {/* Asosiy kontent layouti */}
-        <div className="relative z-10 flex flex-col min-h-screen">
-          <header className="glass-light sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
-                  N
+      <body className={`${inter.className} min-h-screen bg-slate-50`}>
+        <div className="min-h-screen flex flex-col">
+          <header className="bg-white shadow-sm border-b">
+            <div className="max-w-6xl mx-auto px-4 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xl">N</span>
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900">E-Navbat UZ</h1>
+                    <p className="text-xs text-gray-500">Elektron navbat tizimi</p>
+                  </div>
                 </div>
-                <span className="text-2xl font-bold tracking-tight text-white">
-                  Navbat<span className="text-primary">.uz</span>
-                </span>
-              </div>
-              <nav className="hidden md:flex items-center gap-8 font-medium">
-                <a href="/" className="hover:text-primary transition-colors">Bosh sahifa</a>
-                <a href="#tashkilotlar" className="hover:text-primary transition-colors">Tashkilotlar</a>
-                <a href="#qoida" className="hover:text-primary transition-colors">Qoidalar</a>
-              </nav>
-              <div className="flex gap-4">
-                <a href="/login" className="btn-primary text-sm px-5 py-2">
-                  Kirish
-                </a>
               </div>
             </div>
           </header>
-
-          <main className="flex-1 flex flex-col">
-             {children}
+          <main className="flex-1">
+            {children}
           </main>
-
-          <footer className="glass-light mt-auto">
-             <div className="max-w-7xl mx-auto px-6 py-8 text-center text-sm text-gray-400">
-               © {new Date().getFullYear()} E-Navbat UZ. Barcha huquqlar himoyalangan.
-             </div>
+          <footer className="bg-white border-t mt-auto">
+            <div className="max-w-6xl mx-auto px-4 py-4">
+              <p className="text-center text-sm text-gray-500">
+                © 2024 E-Navbat UZ. Barcha huquqlar himoyalangan.
+              </p>
+            </div>
           </footer>
         </div>
       </body>

@@ -1,23 +1,24 @@
 # Dependencies
 node_modules/
 
-# Environment variables
+# Environment
 .env
+.env.local
+.env.production
 
 # Build output
-dist/
-dist-ssr/
+server/dist/
+client/.next/
+client/out/
 
 # Logs
 logs/
 *.log
 npm-debug.log*
-yarn-debug.log*
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
-desktop.ini
 
 # IDE
 .vscode/
@@ -26,10 +27,9 @@ desktop.ini
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
 
-# Local files
-*.local
+# Coverage
+coverage/
 
-# Package lock (ixtiyoriy — loyiha izchilligini saqlash uchun qoldirsa ham bo'ladi)
-# package-lock.json
+# Test
+test-results/

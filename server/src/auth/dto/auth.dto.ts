@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsNotEmpty, IsString, Matches, IsOptional } from 'class-validator';
 
 export class SendOtpDto {
   @IsNotEmpty()
@@ -7,8 +7,19 @@ export class SendOtpDto {
   phone: string;
 }
 
-export class VerifyOtpDto extends SendOtpDto {
+export class VerifyOtpDto {
+  @IsNotEmpty()
+  @IsString()
+  @Matches(/^\+998\d{9}$/, { message: "Telefon raqam +998XXXXXXXXX formatida bo'lishi kerak" })
+  phone: string;
+
   @IsNotEmpty()
   @IsString()
   code: string;
+}
+
+export class RefreshTokenDto {
+  @IsNotEmpty()
+  @IsString()
+  refresh_token: string;
 }

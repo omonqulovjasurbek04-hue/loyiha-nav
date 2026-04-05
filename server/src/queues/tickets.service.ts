@@ -1,15 +1,19 @@
 import {
   Injectable,
   BadRequestException,
+  NotFoundException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 import { Ticket, TicketStatus } from './entities/ticket.entity';
 import { Queue } from './entities/queue.entity';
+import { Service } from '../organizations/entities/service.entity';
 import { QueueGateway } from '../notifications/gateways/queue.gateway';
+import { QueuesService } from './queues.service';
 
 @Injectable()
 export class TicketsService {
@@ -20,9 +24,12 @@ export class TicketsService {
     private readonly ticketRepository: Repository<Ticket>,
     @InjectRepository(Queue)
     private readonly queueRepository: Repository<Queue>,
+    @InjectRepository(Service)
+    private readonly serviceRepository: Repository<Service>,
     private readonly dataSource: DataSource,
     @InjectRedis() private readonly redis: Redis,
     private readonly queueGateway: QueueGateway,
+    private readonly queuesService: QueuesService,
   ) {}
 
   async create(serviceId: string, userId: string): Promise<Ticket> {
@@ -31,9 +38,8 @@ export class TicketsService {
     await queryRunner.startTransaction();
 
     try {
-      // 1. Foydalanuvchida aktiv ticket bormi?
       const activeTicket = await queryRunner.manager.findOne(Ticket, {
-        where: { user: { id: userId }, status: TicketStatus.WAITING },
+        where: { user_id: userId, status: TicketStatus.WAITING },
       });
 
       if (activeTicket) {
@@ -43,16 +49,30 @@ export class TicketsService {
         });
       }
 
-      // 2. Bugungi queue topish yoki yaratish (PESSIMISTIC LOCK)
       const today = new Date().toISOString().split('T')[0];
       let queue = await queryRunner.manager.findOne(Queue, {
-        where: { service: { id: serviceId }, date: today as any },
+        where: { service_id: serviceId, date: today as any },
         lock: { mode: 'pessimistic_write' },
       });
 
+      const service = await queryRunner.manager.findOne(Service, {
+        where: { id: serviceId },
+      });
+
+      if (!service) {
+        throw new NotFoundException('Xizmat topilmadi');
+      }
+
+      if (!service.is_active) {
+        throw new BadRequestException({
+          code: 'SERVICE_CLOSED',
+          message: 'Bu xizmat hozir faol emas',
+        });
+      }
+
       if (!queue) {
         queue = queryRunner.manager.create(Queue, {
-          service: { id: serviceId },
+          service_id: serviceId,
           date: today as any,
           current_number: 0,
           total_issued: 0,
@@ -60,26 +80,19 @@ export class TicketsService {
         await queryRunner.manager.save(queue);
       }
 
-      // 3. Limit tekshirish
-      // NOTE: QISM 2 Service entity request: 'Service'. Assuming it exists.
-      const service = await queryRunner.manager.findOne('Service', {
-        where: { id: serviceId },
-      });
-
-      if (service && queue.total_issued >= (service as any).daily_limit) {
+      if (service.daily_limit && queue.total_issued >= service.daily_limit) {
         throw new BadRequestException({
           code: 'QUEUE_FULL',
           message: 'Bugunlik navbat to\'ldi, ertaga keling',
         });
       }
 
-      // 4. Ticket yaratish
       queue.total_issued += 1;
       await queryRunner.manager.save(queue);
 
       const ticket = queryRunner.manager.create(Ticket, {
-        queue: { id: queue.id },
-        user: { id: userId },
+        queue_id: queue.id,
+        user_id: userId,
         ticket_number: queue.total_issued,
         status: TicketStatus.WAITING,
       });
@@ -87,14 +100,15 @@ export class TicketsService {
       await queryRunner.manager.save(ticket);
       await queryRunner.commitTransaction();
 
-      // 5. Redis cache yangilash
-      await this.updateQueueCache(queue.id);
-
-      // 6. WebSocket orqali barcha kutayotganlarga yangilash
+      await this.queuesService.invalidateCache(serviceId);
       await this.queueGateway.broadcastQueueUpdate(queue.id);
+      await this.queueGateway.emitToUser(ticket.user_id, 'ticket_issued', {
+        ticket_id: ticket.id,
+        ticket_number: ticket.ticket_number,
+        message: `Sizning navbat raqamingiz: ${ticket.ticket_number}`,
+      });
 
       this.logger.log(`Ticket yaratildi: #${ticket.ticket_number} → ${userId}`);
-
       return ticket;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -104,42 +118,133 @@ export class TicketsService {
     }
   }
 
-  async getQueueStatus(serviceId: string): Promise<{
-    position: number;
-    waiting_count: number;
-    estimated_wait: number;
-  }> {
-    const cacheKey = `queue:status:${serviceId}`;
-    const cached = await this.redis.get(cacheKey);
-
-    if (cached) {
-      return JSON.parse(cached);
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-    const queue = await this.queueRepository.findOne({
-      where: { service: { id: serviceId }, date: today as any },
+  async getUserTickets(userId: string): Promise<Ticket[]> {
+    return this.ticketRepository.find({
+      where: { user_id: userId },
+      relations: ['queue', 'queue.service'],
+      order: { issued_at: 'DESC' },
     });
-
-    if (!queue) {
-      return { position: 0, waiting_count: 0, estimated_wait: 0 };
-    }
-
-    const waiting_count = await this.ticketRepository.count({
-      where: { queue: { id: queue.id }, status: TicketStatus.WAITING },
-    });
-
-    const result = {
-      position: queue.current_number,
-      waiting_count,
-      estimated_wait: waiting_count * 15,
-    };
-
-    await this.redis.setex(cacheKey, 10, JSON.stringify(result));
-    return result;
   }
 
-  private async updateQueueCache(queueId: string): Promise<void> {
-    await this.redis.del(`queue:status:${queueId}`);
+  async getTicketById(id: string, userId: string): Promise<Ticket> {
+    const ticket = await this.ticketRepository.findOne({
+      where: { id },
+      relations: ['queue', 'queue.service'],
+    });
+
+    if (!ticket) {
+      throw new NotFoundException('Navbat topilmadi');
+    }
+
+    if (ticket.user_id !== userId) {
+      throw new ForbiddenException('Bu navbat sizga tegishli emas');
+    }
+
+    return ticket;
+  }
+
+  async cancelTicket(id: string, userId: string): Promise<{ message: string }> {
+    const ticket = await this.ticketRepository.findOne({
+      where: { id, user_id: userId },
+    });
+
+    if (!ticket) {
+      throw new NotFoundException('Navbat topilmadi');
+    }
+
+    if (ticket.status !== TicketStatus.WAITING) {
+      throw new BadRequestException('Faqat kutayotgan navbatni bekor qilish mumkin');
+    }
+
+    ticket.status = TicketStatus.CANCELLED;
+    await this.ticketRepository.save(ticket);
+
+    await this.queuesService.invalidateCache(ticket.queue_id);
+
+    return { message: 'Navbat bekor qilindi' };
+  }
+
+  async callTicket(id: string, windowNumber: number, operatorId: string): Promise<Ticket> {
+    const ticket = await this.ticketRepository.findOne({
+      where: { id },
+      relations: ['queue'],
+    });
+
+    if (!ticket) {
+      throw new NotFoundException('Navbat topilmadi');
+    }
+
+    if (ticket.status !== TicketStatus.WAITING) {
+      throw new BadRequestException('Bu navbatni chaqirib bo\'lmaydi');
+    }
+
+    ticket.status = TicketStatus.CALLED;
+    ticket.called_at = new Date();
+    ticket.window_number = windowNumber;
+    await this.ticketRepository.save(ticket);
+
+    await this.queueGateway.callTicket(
+      ticket.id,
+      ticket.ticket_number,
+      windowNumber,
+      ticket.user_id,
+    );
+
+    this.logger.log(`Ticket chaqirildi: #${ticket.ticket_number} → ${windowNumber}`);
+    return ticket;
+  }
+
+  async completeTicket(id: string, operatorId: string): Promise<Ticket> {
+    const ticket = await this.ticketRepository.findOne({
+      where: { id },
+      relations: ['queue'],
+    });
+
+    if (!ticket) {
+      throw new NotFoundException('Navbat topilmadi');
+    }
+
+    if (![TicketStatus.CALLED, TicketStatus.IN_PROGRESS].includes(ticket.status)) {
+      throw new BadRequestException('Bu navbatni yakunlab bo\'lmaydi');
+    }
+
+    ticket.status = TicketStatus.COMPLETED;
+    ticket.completed_at = new Date();
+
+    const queue = ticket.queue;
+    if (queue.current_number < ticket.ticket_number) {
+      queue.current_number = ticket.ticket_number;
+      await this.queueRepository.save(queue);
+    }
+
+    await this.ticketRepository.save(ticket);
+    await this.queuesService.invalidateCache(queue.service_id);
+
+    this.logger.log(`Ticket yakunlandi: #${ticket.ticket_number}`);
+    return ticket;
+  }
+
+  async skipTicket(id: string, operatorId: string): Promise<Ticket> {
+    const ticket = await this.ticketRepository.findOne({
+      where: { id },
+      relations: ['queue'],
+    });
+
+    if (!ticket) {
+      throw new NotFoundException('Navbat topilmadi');
+    }
+
+    if (ticket.status !== TicketStatus.CALLED) {
+      throw new BadRequestException('Bu navbatni o\'tkazib bo\'lmaydi');
+    }
+
+    ticket.status = TicketStatus.SKIPPED;
+    await this.ticketRepository.save(ticket);
+
+    await this.queueGateway.emitToUser(ticket.user_id, 'ticket_skipped', {
+      message: 'Sizning navbatingiz o\'tkazib yuborildi',
+    });
+
+    return ticket;
   }
 }

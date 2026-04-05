@@ -24,7 +24,7 @@ export class Operator {
   window_number: number;
 
   @Column({ nullable: true })
-  current_ticket_id: string;
+  current_ticket_id: string | null;
 
   @Column({
     type: 'enum',
