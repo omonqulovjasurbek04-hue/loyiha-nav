@@ -75,7 +75,7 @@ export class AdminService {
   }
 
   async createOrganization(dto: CreateOrganizationDto): Promise<Organization> {
-    const org = this.orgRepo.create(dto as any);
+    const org = this.orgRepo.create(dto);
     return this.orgRepo.save(org);
   }
 

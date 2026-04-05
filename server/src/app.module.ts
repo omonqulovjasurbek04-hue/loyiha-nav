@@ -65,6 +65,7 @@ import * as path from 'path';
             logging: !isProduction,
             retryAttempts: 3,
             retryDelay: 3000,
+            poolSize: isProduction ? 20 : 10,
           };
         }
 
@@ -80,6 +81,7 @@ import * as path from 'path';
           logging: false,
           retryAttempts: 3,
           retryDelay: 3000,
+          poolSize: 10,
         };
       },
       inject: [ConfigService],

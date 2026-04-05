@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, Index } from 'typeorm';
 import { Ticket } from '../../queues/entities/ticket.entity';
 
 export enum UserRole {
@@ -13,6 +13,7 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column({ unique: true })
   phone: string;
 
@@ -25,6 +26,7 @@ export class User {
   @Column({ type: 'date', nullable: true })
   birth_date: Date;
 
+  @Index()
   @Column({
     type: 'enum',
     enum: UserRole,

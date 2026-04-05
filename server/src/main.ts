@@ -6,12 +6,14 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import helmet from 'helmet';
+import * as compression from 'compression';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
   app.use(helmet());
+  app.use(compression());
 
   // Load root .env for CORS default
   if (process.env.NODE_ENV !== 'production' && !process.env.CORS_ORIGIN) {

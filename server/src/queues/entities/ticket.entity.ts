@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Queue } from './queue.entity';
 
@@ -16,15 +16,18 @@ export class Ticket {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column()
   queue_id: string;
 
+  @Index()
   @Column()
   user_id: string;
 
   @Column({ type: 'int' })
   ticket_number: number; // Masalan: 12
 
+  @Index()
   @Column({
     type: 'enum',
     enum: TicketStatus,
@@ -32,6 +35,7 @@ export class Ticket {
   })
   status: TicketStatus;
 
+  @Index()
   @CreateDateColumn()
   issued_at: Date;
 

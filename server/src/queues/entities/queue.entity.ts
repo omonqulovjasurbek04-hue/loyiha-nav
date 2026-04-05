@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, Index } from 'typeorm';
 import { Service } from '../../organizations/entities/service.entity';
 import { Ticket } from './ticket.entity';
 
@@ -7,9 +7,11 @@ export class Queue {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column()
   service_id: string;
 
+  @Index()
   @Column({ type: 'date' })
   date: Date;
 
