@@ -12,7 +12,9 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-  origin: process.env.CLIENT_URL || '*',
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.CLIENT_URL, 'http://localhost:5173'] // Prod-da xavfsizlik va local test
+    : ['http://localhost:5173', 'http://127.0.0.1:5173', process.env.CLIENT_URL], // Lokal kompyuterda hammaga ruxsat
   credentials: true,
 }));
 
