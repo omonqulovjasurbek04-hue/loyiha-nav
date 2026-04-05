@@ -31,8 +31,8 @@ services:
       dockerfile: Dockerfile
       args:
         # Brauzer backendga to'g'ridan-to'g'ri ulanadi (nginx proksi yo'q)
-        VITE_API_URL: http://localhost:5000/api
-        VITE_SOCKET_URL: http://localhost:5000
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL:-http://localhost:5000}
     container_name: navbat_frontend
     restart: always
     ports:
