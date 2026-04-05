@@ -52,7 +52,14 @@ export default function LoginPage() {
       const res = await api.post('/auth/verify-otp', { phone, code });
       const { access_token, refresh_token } = res.data.data;
       setTokens(access_token, refresh_token);
-      router.push('/');
+
+      // Role bo'yicha yo'naltirish
+      const role = res.data.data?.user?.role;
+      if (role === 'admin' || role === 'superadmin') {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Tasdiqlashda xatolik';
       setError(msg);

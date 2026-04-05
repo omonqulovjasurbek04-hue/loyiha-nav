@@ -1,36 +1,29 @@
 # ============================================================
-# E-Navbat UZ — Monorepo Dockerfile
+# E-Navbat UZ — Monorepo Dockerfile (Backend + Frontend)
 # ============================================================
 
 # ───────────── BUILD STAGE ─────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Barcha dependencies bir marta
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --only=production=false
 
-# Server source
 COPY server/ server/
-COPY tsconfig.json ./
-COPY nest-cli.json ./
+COPY client/ client/
+COPY tsconfig.json nest-cli.json entrypoint.sh ./
 
 # Server build
-RUN npm run server:build
+RUN npx nest build
 
-# Client source
-COPY client/ client/
-COPY postcss.config.mjs ./
-
+# Client build
 ARG NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ARG NEXT_PUBLIC_WS_URL=ws://localhost:5000
 ARG NEXT_PUBLIC_APP_NAME=E-Navbat UZ
-
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
-
-RUN npm run client:build
+RUN cd client && npx next build
 
 # ───────────── PRODUCTION STAGE ─────────────
 FROM node:20-alpine AS production
@@ -47,7 +40,6 @@ COPY --from=builder /app/client/.next/standalone ./frontend
 COPY --from=builder /app/client/.next/static ./frontend/.next/static
 COPY --from=builder /app/client/public ./frontend/public
 
-# Entrypoint
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
@@ -56,4 +48,4 @@ EXPOSE 5000 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s \
   CMD wget -qO- http://localhost:5000/api/health || exit 1
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["tini", "--", "./entrypoint.sh"]

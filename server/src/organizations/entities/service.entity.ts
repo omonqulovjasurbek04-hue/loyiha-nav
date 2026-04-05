@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn } from 'typeorm';
 import { Organization } from './organization.entity';
 import { Queue } from '../../queues/entities/queue.entity';
 
@@ -29,4 +29,7 @@ export class Service {
 
   @OneToMany(() => Queue, (queue) => queue.service)
   queues: Queue[];
+
+  @CreateDateColumn()
+  created_at: Date;
 }

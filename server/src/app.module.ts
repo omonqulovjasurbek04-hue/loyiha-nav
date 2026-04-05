@@ -9,6 +9,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { QueuesModule } from './queues/queues.module';
 import { AuthModule } from './auth/auth.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AdminModule } from './admin/admin.module';
 import { OperatorsModule } from './operators/operators.module';
 import { User } from './users/entities/user.entity';
 import { Organization } from './organizations/entities/organization.entity';
@@ -96,6 +97,7 @@ import * as path from 'path';
     UsersModule,
     OrganizationsModule,
     QueuesModule,
+    AdminModule,
     OperatorsModule,
   ],
   providers: [
