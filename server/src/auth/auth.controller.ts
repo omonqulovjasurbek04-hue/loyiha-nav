@@ -16,9 +16,33 @@ export class AuthController {
   }
 
   @Post('verify-otp')
-  @ApiOperation({ summary: 'OTP tasdiqlash va tizimga kirish' })
+  @ApiOperation({ summary: 'OTP tasdiqlash va tizimga kirish (faqat OTP bilan)' })
   async verifyOtp(@Body() dto: VerifyOtpDto) {
     return this.authService.verifyOtp(dto.phone, dto.code);
+  }
+
+  @Post('register')
+  @ApiOperation({ summary: 'OTP orqali tasdiqlab, parol bilan ro\'yxatdan o\'tish' })
+  async register(@Body() dto: import('./dto/auth.dto').RegisterDto) {
+    return this.authService.register(dto.phone, dto.otp_code, dto.password, dto.full_name);
+  }
+
+  @Post('login')
+  @ApiOperation({ summary: 'Telefon va parol orqali tizimga kirish' })
+  async login(@Body() dto: import('./dto/auth.dto').LoginDto) {
+    return this.authService.login(dto.phone, dto.password);
+  }
+
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Parolni tiklash uchun SMS kod yuborish' })
+  async forgotPassword(@Body() dto: import('./dto/auth.dto').ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.phone);
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'SMS kod orqali parolni tiklash' })
+  async resetPassword(@Body() dto: import('./dto/auth.dto').ResetPasswordDto) {
+    return this.authService.resetPassword(dto.phone, dto.otp_code, dto.new_password);
   }
 
   @Post('refresh')

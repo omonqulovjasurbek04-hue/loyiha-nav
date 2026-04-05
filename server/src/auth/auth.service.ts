@@ -171,6 +171,19 @@ export class AuthService {
     return { message: 'Parol muvaffaqiyatli yangilandi' };
   }
 
+  // ─── OTP tasdiqlash va kirish/ro'yxatdan o'tish (OTP only flow) ──────────
+  async verifyOtp(phone: string, otp: string): Promise<{ access_token: string; refresh_token: string; user: User }> {
+    await this.verifyAndConsumeOtp(phone, otp);
+    let user = await this.userRepository.findOne({ where: { phone } });
+    if (!user) {
+      this.logger.log(`Yangi foydalanuvchi (OTP): ${phone}`);
+      user = this.userRepository.create({ phone, full_name: phone });
+      await this.userRepository.save(user);
+    }
+    this.logger.log(`Kirish (OTP): ${phone}`);
+    return { ...await this.generateTokens(user), user };
+  }
+
   // ─── OTP tasdiqlash va iste'mol qilish (ichki) ───────────────────────────
   private async verifyAndConsumeOtp(phone: string, otp: string): Promise<void> {
     const otpRecord = await this.otpRepository.findOne({ where: { phone } });

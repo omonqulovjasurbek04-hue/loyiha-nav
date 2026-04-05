@@ -15,10 +15,23 @@ export function setTokens(access: string, refresh: string): void {
   }
 }
 
+export function setUser(user: any): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('user_info', JSON.stringify(user));
+  }
+}
+
+export function getUser(): any | null {
+  if (typeof window === 'undefined') return null;
+  const user = localStorage.getItem('user_info');
+  return user ? JSON.parse(user) : null;
+}
+
 export function clearTokens(): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_info');
   }
 }
 

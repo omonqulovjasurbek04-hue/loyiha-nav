@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { setTokens } from '@/lib/auth';
 import api from '@/lib/api';
+import { Shield, ArrowRight, Lock } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function AdminLoginPage() {
       setTokens(access_token, refresh_token);
       router.push('/admin');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Parol noto\'g\'ri';
+      const msg = err instanceof Error ? err.message : "Parol noto'g'ri";
       setError(msg);
     } finally {
       setLoading(false);
@@ -29,47 +30,82 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-6">
-      <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto bg-red-600 rounded-2xl flex items-center justify-center mb-4">
-            <span className="text-3xl">🔑</span>
+    <div className="pt-24 pb-16 min-h-screen flex items-center justify-center relative overflow-hidden">
+      <div className="w-full max-w-md mx-auto px-4 relative z-10 animate-fade-in">
+        
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-3 mb-6">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/30">
+              <Shield className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <span className="text-2xl font-bold text-white">Admin</span>
+              <span className="text-2xl font-bold text-red-400">.uz</span>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Panel</h1>
-          <p className="text-gray-500 text-sm">Boshqaruv paneliga kirish uchun parolni kiriting</p>
+          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">
+            Xavfsiz Kirish
+          </h1>
+          <p className="text-slate-400">
+            Tizim boshqaruv paneliga kirish uchun parolni kiriting
+          </p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg mb-4 text-sm">
-            {error}
-          </div>
-        )}
+        {/* Card */}
+        <div className="glass rounded-3xl p-8 md:p-10 glow animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          {error && (
+            <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-red-400" />
+              <span>{error}</span>
+            </div>
+          )}
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Admin parol</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Parolni kiriting"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none text-lg"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
-          >
-            {loading ? 'Tekshirilmoqda...' : 'Kirish'}
-          </button>
-          <div className="text-center">
-            <a href="/login" className="text-sm text-gray-500 hover:text-indigo-600">
-              ← Foydalanuvchi sifatida kirish
-            </a>
-          </div>
-        </form>
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Boshqaruvchi paroli
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Parolni kiriting..."
+                  required
+                  className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 rounded-xl text-white placeholder-slate-500 border border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-medium py-3.5 rounded-xl shadow-lg shadow-red-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Tekshirilmoqda...
+                </span>
+              ) : (
+                <>
+                  Tizimga Kirish
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+            <div className="text-center pt-2 border-t border-slate-700/50 mt-4">
+              <a href="/login" className="text-sm text-slate-400 hover:text-white transition-colors">
+                ← Foydalanuvchi sifatida kirish
+              </a>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

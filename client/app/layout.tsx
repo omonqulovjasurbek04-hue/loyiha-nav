@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "E-Navbat UZ",
+  title: "Navbat.uz",
   description: "O'zbekiston uchun elektron navbat olish tizimi",
 };
 
@@ -16,29 +18,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uz">
-      <body className={`${inter.className} min-h-screen bg-slate-50 antialiased`}>
-        <div className="min-h-screen flex flex-col">
-          <header className="bg-white shadow-sm border-b">
-            <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">N</span>
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">E-Navbat UZ</h1>
-                  <p className="text-xs text-gray-500">Elektron navbat tizimi</p>
-                </div>
-              </div>
-            </div>
-          </header>
-          <main className="flex-1">
+      <body className={`${inter.className} min-h-screen antialiased`}>
+        {/* Global Background Effects */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-indigo-500/20 rounded-full blur-[100px] animate-pulse-slow"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/15 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/5 rounded-full blur-[150px]"></div>
+        </div>
+
+        <div className="min-h-screen flex flex-col pt-16">
+          <Navbar />
+          <main className="flex-1 relative w-full">
             {children}
           </main>
-          <footer className="bg-white border-t mt-auto">
-            <div className="max-w-6xl mx-auto px-4 py-4 text-center text-sm text-gray-500">
-              © 2024 E-Navbat UZ. Barcha huquqlar himoyalangan.
-            </div>
-          </footer>
+          <Footer />
         </div>
       </body>
     </html>
