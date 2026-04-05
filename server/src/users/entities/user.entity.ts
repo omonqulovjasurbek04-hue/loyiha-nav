@@ -37,6 +37,9 @@ export class User {
   @Column({ default: true })
   is_active: boolean;
 
+  @Column({ nullable: true, select: false })
+  password_hash: string;
+
   @CreateDateColumn()
   created_at: Date;
 
