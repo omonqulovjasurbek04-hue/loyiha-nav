@@ -11,7 +11,7 @@ RUN npm ci --only=production=false
 
 COPY server/ server/
 COPY client/ client/
-COPY tsconfig.json nest-cli.json entrypoint.sh Caddyfile* ./
+COPY tsconfig.json nest-cli.json entrypoint.sh Caddyfile* .env.production ./
 
 # Server build
 RUN npx nest build
@@ -33,6 +33,7 @@ RUN apk add --no-cache tini caddy
 
 # Backend
 COPY --from=builder /app/server/dist ./backend/dist
+COPY --from=builder /app/.env.production ./backend/.env.production
 COPY --from=builder /app/node_modules ./node_modules
 
 # Frontend

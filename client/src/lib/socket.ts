@@ -1,17 +1,18 @@
-import { io, Socket } from 'socket.io-client';
+import { io, Socket } from "socket.io-client";
 
 class SocketManager {
   private socket: Socket | null = null;
-  private reconnectTimer: NodeJS.Timeout | null = null;
 
-  connect(): Socket {
+  connect(): Socket | null {
     if (this.socket?.connected) return this.socket;
 
-    const token = localStorage.getItem('access_token');
+    if (typeof window === "undefined") return null;
 
-    this.socket = io(process.env.NEXT_PUBLIC_WS_URL!, {
+    const token = localStorage.getItem("access_token");
+
+    this.socket = io(process.env.NEXT_PUBLIC_WS_URL || "/", {
       auth: { token },
-      transports: ['websocket', 'polling'],
+      transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
@@ -19,20 +20,16 @@ class SocketManager {
       timeout: 10000,
     });
 
-    this.socket.on('connect', () => {
-      console.log('[WS] Ulandi:', this.socket?.id);
-      if (this.reconnectTimer) {
-        clearTimeout(this.reconnectTimer);
-        this.reconnectTimer = null;
-      }
+    this.socket.on("connect", () => {
+      console.log("[WS] Ulandi:", this.socket?.id);
     });
 
-    this.socket.on('disconnect', (reason) => {
-      console.warn('[WS] Uzildi:', reason);
+    this.socket.on("disconnect", (reason) => {
+      console.warn("[WS] Uzildi:", reason);
     });
 
-    this.socket.on('connect_error', (err) => {
-      console.error('[WS] Xatolik:', err.message);
+    this.socket.on("connect_error", (err) => {
+      console.error("[WS] Xatolik:", err.message);
     });
 
     return this.socket;
@@ -50,6 +47,5 @@ class SocketManager {
   }
 }
 
-// Global singleton
 export const socketManager = new SocketManager();
 export const getSocket = () => socketManager.connect();

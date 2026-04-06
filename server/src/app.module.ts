@@ -1,47 +1,59 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
-import { UsersModule } from './users/users.module';
-import { OrganizationsModule } from './organizations/organizations.module';
-import { QueuesModule } from './queues/queues.module';
-import { AuthModule } from './auth/auth.module';
-import { NotificationsModule } from './notifications/notifications.module';
-import { AdminModule } from './admin/admin.module';
-import { OperatorsModule } from './operators/operators.module';
-import { User } from './users/entities/user.entity';
-import { Organization } from './organizations/entities/organization.entity';
-import { Service } from './organizations/entities/service.entity';
-import { Queue } from './queues/entities/queue.entity';
-import { Ticket } from './queues/entities/ticket.entity';
-import { Operator } from './users/entities/operator.entity';
-import { Notification } from './users/entities/notification.entity';
-import { OtpStorage } from './auth/entities/otp.entity';
-import { TokenBlacklist } from './auth/entities/blacklist.entity';
-import * as path from 'path';
+import { Module } from "@nestjs/common";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { APP_GUARD } from "@nestjs/core";
+import { UsersModule } from "./users/users.module";
+import { OrganizationsModule } from "./organizations/organizations.module";
+import { QueuesModule } from "./queues/queues.module";
+import { AuthModule } from "./auth/auth.module";
+import { NotificationsModule } from "./notifications/notifications.module";
+import { AdminModule } from "./admin/admin.module";
+import { OperatorsModule } from "./operators/operators.module";
+import { User } from "./users/entities/user.entity";
+import { Organization } from "./organizations/entities/organization.entity";
+import { Service } from "./organizations/entities/service.entity";
+import { Queue } from "./queues/entities/queue.entity";
+import { Ticket } from "./queues/entities/ticket.entity";
+import { Operator } from "./users/entities/operator.entity";
+import { Notification } from "./users/entities/notification.entity";
+import { OtpStorage } from "./auth/entities/otp.entity";
+import { TokenBlacklist } from "./auth/entities/blacklist.entity";
+import * as path from "path";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: process.env.NODE_ENV === 'production'
-        ? path.resolve(process.cwd(), '.env.production')
-        : path.resolve(process.cwd(), '.env'),
+      envFilePath:
+        process.env.NODE_ENV === "production"
+          ? path.resolve(process.cwd(), "..", ".env.production")
+          : path.resolve(process.cwd(), "..", ".env"),
     }),
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const isProduction = configService.get<string>('NODE_ENV') === 'production';
-        const databaseUrl = configService.get<string>('DATABASE_URL');
+        const isProduction =
+          configService.get<string>("NODE_ENV") === "production";
+        const databaseUrl = configService.get<string>("DATABASE_URL");
 
         if (databaseUrl) {
           return {
-            type: 'postgres' as const,
+            type: "postgres" as const,
             url: databaseUrl,
             ssl: isProduction ? { rejectUnauthorized: false } : false,
-            entities: [User, Organization, Service, Queue, Ticket, Operator, Notification, OtpStorage, TokenBlacklist],
+            entities: [
+              User,
+              Organization,
+              Service,
+              Queue,
+              Ticket,
+              Operator,
+              Notification,
+              OtpStorage,
+              TokenBlacklist,
+            ],
             synchronize: !isProduction,
             logging: !isProduction,
             retryAttempts: 3,
@@ -51,13 +63,23 @@ import * as path from 'path';
         }
 
         return {
-          type: 'postgres' as const,
-          host: configService.get<string>('DB_HOST', 'localhost'),
-          port: configService.get<number>('DB_PORT', 5432),
-          username: configService.get<string>('DB_USER', 'postgres'),
-          password: configService.get<string>('DB_PASSWORD', 'postgres'),
-          database: configService.get<string>('DB_NAME', 'enavbat'),
-          entities: [User, Organization, Service, Queue, Ticket, Operator, Notification, OtpStorage, TokenBlacklist],
+          type: "postgres" as const,
+          host: configService.get<string>("DB_HOST", "localhost"),
+          port: configService.get<number>("DB_PORT", 5432),
+          username: configService.get<string>("DB_USER", "postgres"),
+          password: configService.get<string>("DB_PASSWORD", "postgres"),
+          database: configService.get<string>("DB_NAME", "enavbat"),
+          entities: [
+            User,
+            Organization,
+            Service,
+            Queue,
+            Ticket,
+            Operator,
+            Notification,
+            OtpStorage,
+            TokenBlacklist,
+          ],
           synchronize: true,
           logging: false,
           retryAttempts: 3,
