@@ -1,14 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, Index, Unique } from 'typeorm';
 import { Service } from '../../organizations/entities/service.entity';
 import { Ticket } from './ticket.entity';
 
 @Entity('queues')
+@Unique(['service_id', 'date'])
 export class Queue {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Index()
-  @Column()
+  @Column({ type: 'uuid' })
   service_id: string;
 
   @Index()

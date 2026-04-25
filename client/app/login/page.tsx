@@ -115,12 +115,19 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      await api.post('/auth/send-otp', { phone });
-      setRegisterStep('otp_verification');
-      setCountdown(60);
-      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+      // OTP tekshiruvini o'tkazib yuborib to'g'ridan-to'g'ri ro'yxatdan o'tkazamiz
+      const res = await api.post('/auth/register', {
+        phone,
+        otp_code: '000000', // DTO dagi optional yoki dummy qilib yuboramiz
+        password,
+        full_name: phone
+      });
+      const { access_token, refresh_token, user } = res.data.data;
+      setTokens(access_token, refresh_token);
+      import('@/lib/auth').then((m) => m.setUser(user));
+      router.push('/dashboard');
     } catch (err: unknown) {
-      setError("Kodni yuborishda xatolik yuz berdi");
+      setError("Ro'yxatdan o'tishda xatolik yuz berdi");
     } finally {
       setLoading(false);
     }
@@ -211,7 +218,7 @@ export default function LoginPage() {
           value={digit}
           onChange={(e) => handleOtpInput(i, e.target.value)}
           onKeyDown={(e) => handleOtpKeyDown(i, e)}
-          className="w-12 h-14 text-center text-2xl font-bold bg-slate-800/50 text-white rounded-xl border border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+          className="w-12 h-14 text-center text-2xl font-bold bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white rounded-xl border border-slate-200 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
         />
       ))}
     </div>
@@ -232,10 +239,10 @@ export default function LoginPage() {
               <span className="text-2xl font-bold text-amber-400">.uz</span>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">
              {authMode === 'login' ? "Tizimga kirish" : authMode === 'register' ? "Ro'yxatdan o'tish" : "Parolni yangilash"}
           </h1>
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-600 dark:text-slate-400 text-sm">
              {authMode === 'login' && "Telefon raqam va parolingizni kiritib profilingizga kiring"}
              {authMode === 'register' && registerStep === 'details' && "Ma'lumotlaringizni kiritib o'zingizga profil yarating"}
              {authMode === 'register' && registerStep === 'otp_verification' && "Telefoningizga kelgan kodni kiriting"}
@@ -244,15 +251,15 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="glass rounded-3xl p-8 md:p-10 glow flex flex-col gap-5">
+        <div className="glass rounded-3xl p-8 md:p-10 glow flex flex-col gap-5 bg-white/50 dark:bg-transparent">
           
           {error && (
-            <div className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400 flex items-center gap-2">
+            <div className="px-4 py-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
               <span>⚠️</span><span>{error}</span>
             </div>
           )}
           {successMsg && (
-            <div className="px-4 py-3 bg-green-500/10 border border-green-500/30 rounded-xl text-sm text-green-400 flex items-center gap-2">
+            <div className="px-4 py-3 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 rounded-xl text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
               <span>✔️</span><span>{successMsg}</span>
             </div>
           )}
@@ -261,24 +268,24 @@ export default function LoginPage() {
           {authMode === 'login' && (
              <form onSubmit={handleLogin} className="space-y-5 animate-fade-in">
                <div>
-                 <label className="block text-sm font-medium text-slate-300 mb-2">Telefon raqam</label>
+                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Telefon raqam</label>
                  <div className="relative">
-                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998 90 123 45 67" required className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 rounded-xl text-white outline-none border border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50" />
+                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998 90 123 45 67" required className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800/50 rounded-xl text-slate-900 dark:text-white outline-none border border-slate-200 dark:border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50 shadow-sm dark:shadow-none" />
                  </div>
                </div>
 
                <div>
-                 <label className="block text-sm font-medium text-slate-300 mb-2">Parol</label>
+                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Parol</label>
                  <div className="relative">
-                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                   <input type={showPass ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Parolingizni kiriting" required className="w-full pl-12 pr-12 py-3.5 bg-slate-800/50 rounded-xl text-white outline-none border border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50" />
-                   <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                   <input type={showPass ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Parolingizni kiriting" required className="w-full pl-12 pr-12 py-3.5 bg-white dark:bg-slate-800/50 rounded-xl text-slate-900 dark:text-white outline-none border border-slate-200 dark:border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50 shadow-sm dark:shadow-none" />
+                   <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                      {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                    </button>
                  </div>
                  <div className="text-right mt-2">
-                    <button type="button" onClick={() => switchMode('forgot_password')} className="text-sm text-indigo-400 hover:text-indigo-300">Parolni unutdimmi?</button>
+                    <button type="button" onClick={() => switchMode('forgot_password')} className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">Parolni unutdimmi?</button>
                  </div>
                </div>
 
@@ -292,29 +299,29 @@ export default function LoginPage() {
           {authMode === 'register' && registerStep === 'details' && (
              <form onSubmit={triggerRegisterOtp} className="space-y-5 animate-fade-in">
                <div>
-                 <label className="block text-sm font-medium text-slate-300 mb-2">Telefon raqam</label>
+                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Telefon raqam</label>
                  <div className="relative">
-                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998 90 123 45 67" required className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 rounded-xl text-white outline-none border border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50" />
+                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998 90 123 45 67" required className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800/50 rounded-xl text-slate-900 dark:text-white outline-none border border-slate-200 dark:border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50 shadow-sm dark:shadow-none" />
                  </div>
                </div>
                
                <div>
-                 <label className="block text-sm font-medium text-slate-300 mb-2">Yangi parol o'rnating</label>
+                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Yangi parol o'rnating</label>
                  <div className="relative">
-                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                   <input type={showPass ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Kamida 6 belgi" required className="w-full pl-12 pr-12 py-3.5 bg-slate-800/50 rounded-xl text-white outline-none border border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50" />
-                   <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                   <input type={showPass ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Kamida 6 belgi" required className="w-full pl-12 pr-12 py-3.5 bg-white dark:bg-slate-800/50 rounded-xl text-slate-900 dark:text-white outline-none border border-slate-200 dark:border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50 shadow-sm dark:shadow-none" />
+                   <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                      {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                    </button>
                  </div>
                </div>
 
                <div>
-                 <label className="block text-sm font-medium text-slate-300 mb-2">Parol tasdig'i</label>
+                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Parol tasdig'i</label>
                  <div className="relative">
-                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                   <input type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Yuqoridagi parolni takrorlang" required className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 rounded-xl text-white outline-none border border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50" />
+                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                   <input type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Yuqoridagi parolni takrorlang" required className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800/50 rounded-xl text-slate-900 dark:text-white outline-none border border-slate-200 dark:border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50 shadow-sm dark:shadow-none" />
                  </div>
                </div>
 
@@ -326,45 +333,45 @@ export default function LoginPage() {
 
           {authMode === 'register' && registerStep === 'otp_verification' && (
              <form onSubmit={completeRegister} className="space-y-6 animate-fade-in">
-                <div className="text-center text-sm text-slate-300 mb-2">
-                   Biz <span className="text-indigo-400 font-semibold">{phone}</span> raqamiga tasdiqlash kodini jo'natdik.
+                <div className="text-center text-sm text-slate-600 dark:text-slate-300 mb-2">
+                   Biz <span className="text-indigo-600 dark:text-indigo-400 font-semibold">{phone}</span> raqamiga tasdiqlash kodini jo'natdik.
                 </div>
                 {renderOtpInputs()}
-                <div className="text-center mt-3 text-xs text-slate-400">
-                    Test kod: <span className="text-indigo-400">111111</span>. 
-                    {countdown > 0 ? ` (${countdown}s)` : <button type="button" className="text-indigo-400 ml-2 hover:underline" onClick={triggerRegisterOtp}>Qayta yuborish</button>}
+                <div className="text-center mt-3 text-xs text-slate-500 dark:text-slate-400">
+                    Test kod: <span className="text-indigo-600 dark:text-indigo-400">111111</span>. 
+                    {countdown > 0 ? ` (${countdown}s)` : <button type="button" className="text-indigo-600 dark:text-indigo-400 ml-2 hover:underline" onClick={triggerRegisterOtp}>Qayta yuborish</button>}
                 </div>
                 <button type="submit" disabled={loading || code.join('').length < 6} className="btn-primary w-full justify-center py-3.5 text-base">
                   {loading ? 'Tasdiqlanmoqda...' : 'Tasdiqlash'}
                 </button>
                 <div className="text-center">
-                   <button type="button" onClick={() => setRegisterStep('details')} className="text-xs text-slate-400 hover:text-white">← Bekor qilish / Orqaga</button>
+                   <button type="button" onClick={() => setRegisterStep('details')} className="text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">← Bekor qilish / Orqaga</button>
                 </div>
              </form>
           )}
 
           {/* ======================= FORGOT PASSWORD ======================= */}
           {authMode === 'forgot_password' && forgotStep === 'phone' && (
-            <form onSubmit={triggerForgotOtp} className="space-y-5 animate-fade-in">
+             <form onSubmit={triggerForgotOtp} className="space-y-5 animate-fade-in">
                <div>
-                 <label className="block text-sm font-medium text-slate-300 mb-2">Telefon raqam</label>
+                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Telefon raqam</label>
                  <div className="relative">
-                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998 90 123 45 67" required className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 rounded-xl text-white outline-none border border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50" />
+                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998 90 123 45 67" required className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800/50 rounded-xl text-slate-900 dark:text-white outline-none border border-slate-200 dark:border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50 shadow-sm dark:shadow-none" />
                  </div>
                </div>
                <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-3.5 mt-2 text-base">
                  {loading ? 'Kuting...' : 'SMS Kodni Yuborish'}
                </button>
                <div className="text-center pt-2">
-                  <button type="button" onClick={() => switchMode('login')} className="text-sm text-slate-400 hover:text-white">Ortga qaytish</button>
+                  <button type="button" onClick={() => switchMode('login')} className="text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">Ortga qaytish</button>
                </div>
             </form>
           )}
 
           {authMode === 'forgot_password' && forgotStep === 'reset_otp_and_password' && (
              <form onSubmit={completePasswordReset} className="space-y-5 animate-fade-in">
-                <div className="text-center text-sm text-slate-300 mb-2">
+                <div className="text-center text-sm text-slate-600 dark:text-slate-300 mb-2">
                    Tasdiqlash kodi:
                 </div>
                 {renderOtpInputs()}
@@ -372,14 +379,14 @@ export default function LoginPage() {
                 <div className="pt-4 space-y-4">
                   <div>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Yangi parol (kamida 6)" required className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 rounded-xl text-white outline-none border border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Yangi parol (kamida 6)" required className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800/50 rounded-xl text-slate-900 dark:text-white outline-none border border-slate-200 dark:border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50 shadow-sm dark:shadow-none" />
                     </div>
                   </div>
                   <div>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                      <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Parolni takrorlang" required className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 rounded-xl text-white outline-none border border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                      <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Parolni takrorlang" required className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800/50 rounded-xl text-slate-900 dark:text-white outline-none border border-slate-200 dark:border-slate-700/50 focus:ring-2 focus:ring-indigo-500/50 shadow-sm dark:shadow-none" />
                     </div>
                   </div>
                 </div>
@@ -388,7 +395,7 @@ export default function LoginPage() {
                   {loading ? 'Yangilanmoqda...' : 'Parolni Yangilash'}
                 </button>
                 <div className="text-center pt-2">
-                   <button type="button" onClick={() => switchMode('login')} className="text-xs text-slate-400 hover:text-white">← Tizimga kirishga o'tish</button>
+                   <button type="button" onClick={() => switchMode('login')} className="text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">← Tizimga kirishga o'tish</button>
                 </div>
              </form>
           )}
@@ -397,17 +404,17 @@ export default function LoginPage() {
           {authMode !== 'forgot_password' && (
              <div className="flex flex-col items-center gap-4 mt-2">
                <div className="flex items-center gap-4 w-full">
-                 <div className="flex-1 h-px bg-slate-700/50"></div>
-                 <span className="text-slate-500 text-sm">yoki</span>
-                 <div className="flex-1 h-px bg-slate-700/50"></div>
+                 <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700/50"></div>
+                 <span className="text-slate-400 dark:text-slate-500 text-sm">yoki</span>
+                 <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700/50"></div>
                </div>
                
-               <p className="text-center text-slate-400 text-sm">
+               <p className="text-center text-slate-500 dark:text-slate-400 text-sm">
                  {authMode === 'register' ? "Hisobingiz bormi? " : "Hisobingiz yo'qmi? "}
                  <button
                    type="button"
                    onClick={() => switchMode(authMode === 'register' ? 'login' : 'register')}
-                   className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+                   className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors"
                  >
                    {authMode === 'register' ? 'Tizimga kirish' : "Ro'yxatdan o'tish"}
                  </button>

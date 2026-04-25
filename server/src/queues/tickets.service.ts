@@ -46,7 +46,7 @@ export class TicketsService {
         });
       }
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Tashkent' }).split(',')[0];
       let queue = await queryRunner.manager.findOne(Queue, {
         where: { service_id: serviceId, date: today as any },
         lock: { mode: 'pessimistic_write' },
@@ -68,13 +68,28 @@ export class TicketsService {
       }
 
       if (!queue) {
-        queue = queryRunner.manager.create(Queue, {
-          service_id: serviceId,
-          date: today as any,
-          current_number: 0,
-          total_issued: 0,
-        });
-        await queryRunner.manager.save(queue);
+        await queryRunner.query('SAVEPOINT create_queue');
+        try {
+          queue = queryRunner.manager.create(Queue, {
+            service_id: serviceId,
+            date: today as any,
+            current_number: 0,
+            total_issued: 0,
+          });
+          await queryRunner.manager.save(queue);
+          await queryRunner.query('RELEASE SAVEPOINT create_queue');
+        } catch (error: any) {
+          await queryRunner.query('ROLLBACK TO SAVEPOINT create_queue');
+          if (error.code === '23505') { // UniqueViolation
+            queue = await queryRunner.manager.findOne(Queue, {
+              where: { service_id: serviceId, date: today as any },
+              lock: { mode: 'pessimistic_write' },
+            });
+            if (!queue) throw error;
+          } else {
+            throw error;
+          }
+        }
       }
 
       if (service.daily_limit && queue.total_issued >= service.daily_limit) {

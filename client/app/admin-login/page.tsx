@@ -40,41 +40,41 @@ export default function AdminLoginPage() {
               <Shield className="w-7 h-7 text-white" />
             </div>
             <div>
-              <span className="text-2xl font-bold text-white">Admin</span>
-              <span className="text-2xl font-bold text-red-400">.uz</span>
+              <span className="text-2xl font-bold text-slate-900 dark:text-white">Admin</span>
+              <span className="text-2xl font-bold text-red-600 dark:text-red-400">.uz</span>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">
             Xavfsiz Kirish
           </h1>
-          <p className="text-slate-400">
+          <p className="text-slate-600 dark:text-slate-400">
             Tizim boshqaruv paneliga kirish uchun parolni kiriting
           </p>
         </div>
 
         {/* Card */}
-        <div className="glass rounded-3xl p-8 md:p-10 glow animate-slide-up" style={{ animationDelay: '0.1s' }}>
+        <div className="glass bg-white/50 dark:bg-transparent rounded-3xl p-8 md:p-10 glow animate-slide-up" style={{ animationDelay: '0.1s' }}>
           {error && (
-            <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-red-400" />
+            <div className="mb-6 px-4 py-3 bg-red-100 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-red-600 dark:text-red-400" />
               <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Boshqaruvchi paroli
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Parolni kiriting..."
                   required
-                  className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 rounded-xl text-white placeholder-slate-500 border border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800/50 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all shadow-sm dark:shadow-none"
                 />
               </div>
             </div>
@@ -99,8 +99,8 @@ export default function AdminLoginPage() {
                 </>
               )}
             </button>
-            <div className="text-center pt-2 border-t border-slate-700/50 mt-4">
-              <a href="/login" className="text-sm text-slate-400 hover:text-white transition-colors">
+            <div className="text-center pt-2 border-t border-slate-200 dark:border-slate-700/50 mt-4">
+              <a href="/login" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                 ← Foydalanuvchi sifatida kirish
               </a>
             </div>

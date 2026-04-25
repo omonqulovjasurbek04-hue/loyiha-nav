@@ -7,7 +7,7 @@ export class Service {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ type: 'uuid' })
   org_id: string;
 
   @Column()

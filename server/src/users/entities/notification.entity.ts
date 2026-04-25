@@ -7,10 +7,10 @@ export class Notification {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ type: 'uuid' })
   user_id: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   ticket_id: string;
 
   @Column()

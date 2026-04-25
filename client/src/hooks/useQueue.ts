@@ -12,12 +12,14 @@ export function useQueue(ticketId: string | null) {
   const joinQueue = useCallback(() => {
     if (!ticketId) return;
     const socket = getSocket();
+    if (!socket) return;
     socket.emit('join_queue', { ticket_id: ticketId });
   }, [ticketId]);
 
   const leaveQueue = useCallback(() => {
     if (!ticketId) return;
     const socket = getSocket();
+    if (!socket) return;
     socket.emit('leave_queue', { ticket_id: ticketId });
   }, [ticketId]);
 
@@ -25,6 +27,7 @@ export function useQueue(ticketId: string | null) {
     if (!ticketId) return;
 
     const socket = getSocket();
+    if (!socket) return;
 
     socket.emit('join_queue', { ticket_id: ticketId });
 

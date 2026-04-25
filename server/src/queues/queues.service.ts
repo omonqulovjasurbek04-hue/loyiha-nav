@@ -20,7 +20,7 @@ export class QueuesService {
     total_issued: number;
     waiting_count: number;
   }> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Tashkent' }).split(',')[0];
     const queue = await this.queueRepository.findOne({
       where: { service_id: serviceId, date: today as any },
     });

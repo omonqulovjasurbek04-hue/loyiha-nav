@@ -17,11 +17,11 @@ export class Ticket {
   id: string;
 
   @Index()
-  @Column()
+  @Column({ type: 'uuid' })
   queue_id: string;
 
   @Index()
-  @Column()
+  @Column({ type: 'uuid' })
   user_id: string;
 
   @Column({ type: 'int' })

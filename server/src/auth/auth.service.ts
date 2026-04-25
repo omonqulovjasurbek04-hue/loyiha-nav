@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { User } from '../users/entities/user.entity';
 import { OtpStorage } from './entities/otp.entity';
 import { TokenBlacklist } from './entities/blacklist.entity';
@@ -50,7 +51,7 @@ export class AuthService {
     }
 
     const otp = process.env.NODE_ENV === 'production'
-      ? Math.floor(100000 + Math.random() * 900000).toString()
+      ? crypto.randomInt(100000, 1000000).toString()
       : '111111';
 
     otpRecord.code = otp;
@@ -74,8 +75,8 @@ export class AuthService {
     password: string,
     fullName?: string,
   ): Promise<{ access_token: string; refresh_token: string; user: User }> {
-    // OTP tekshirish
-    await this.verifyAndConsumeOtp(phone, otpCode);
+    // OTP tekshirish (SMS kerak emasligi sababli o'chirib qo'yildi)
+    // await this.verifyAndConsumeOtp(phone, otpCode);
 
     // Foydalanuvchi allaqachon bor-yo'qligini tekshirish
     const existing = await this.userRepository.findOne({ where: { phone } });

@@ -64,6 +64,8 @@ export default function Home() {
     if (!myTicket) return;
 
     const socket = getSocket();
+    if (!socket) return;
+    
     socket.emit('join_queue', { ticket_id: myTicket.id });
 
     const handleUpdate = (data: { position: number; waiting_count: number; estimated_wait: number }) => {
@@ -202,15 +204,10 @@ export default function Home() {
     <div className="pt-24 pb-16 min-h-screen">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Header Actions */}
-        <div className="flex justify-end mb-4">
-          <button onClick={handleLogout} className="text-sm text-slate-400 hover:text-red-400 transition-colors">
-            Chiqish
-          </button>
-        </div>
+
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl mb-6">
+          <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/50 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl mb-6">
             {error}
           </div>
         )}
@@ -220,7 +217,7 @@ export default function Home() {
           /*         MY TICKET DASHBOARD        */
           /* ================================== */
           <div className="animate-slide-up">
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-8">
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-8">
               Mening <span className="text-gradient">navbatim</span>
             </h1>
 
@@ -230,53 +227,53 @@ export default function Home() {
                 <div className={`glass rounded-3xl p-8 glow h-full flex flex-col ${wsCalled ? 'shadow-green-500/20 shadow-2xl ring-1 ring-green-500/50' : ''}`}>
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
                         <Clock className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <div className="text-white font-semibold">{myTicket.service?.name || 'Xizmat'}</div>
-                        <div className="text-slate-400 text-sm">{statusLabel()}</div>
+                        <div className="text-slate-900 dark:text-white font-semibold">{myTicket.service?.name || 'Xizmat'}</div>
+                        <div className="text-slate-600 dark:text-slate-400 text-sm">{statusLabel()}</div>
                       </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${wsCalled ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${wsCalled ? 'bg-green-400' : 'bg-yellow-400 animate-pulse'}`}></div>
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${wsCalled ? 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400' : 'bg-yellow-100 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${wsCalled ? 'bg-green-500 dark:bg-green-400' : 'bg-yellow-500 dark:bg-yellow-400 animate-pulse'}`}></div>
                       {wsCalled ? 'Chaqirildi' : 'Kutmoqda'}
                     </div>
                   </div>
 
-                  <div className={`rounded-2xl p-6 mb-6 text-center ${wsCalled ? 'bg-green-500/10' : 'bg-indigo-500/10'}`}>
-                    <div className="text-slate-400 text-sm mb-1">Sizning raqamingiz</div>
-                    <div className={`text-7xl font-black mb-2 ${wsCalled ? 'text-green-400' : 'text-gradient'}`}>
+                  <div className={`rounded-2xl p-6 mb-6 text-center ${wsCalled ? 'bg-green-50 dark:bg-green-500/10 border border-green-100 dark:border-transparent' : 'bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-transparent'}`}>
+                    <div className="text-slate-500 dark:text-slate-400 text-sm mb-1">Sizning raqamingiz</div>
+                    <div className={`text-7xl font-black mb-2 ${wsCalled ? 'text-green-600 dark:text-green-400' : 'text-gradient'}`}>
                       #{myTicket.ticket_number}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 mb-6 mt-auto">
-                    <div className="text-center glass-light rounded-2xl py-4">
-                      <div className="text-2xl font-bold text-white">{wsPosition ?? queueStatus?.waiting_count ?? 0}</div>
-                      <div className="text-slate-400 text-xs">Sizdan orqada (kutmoqda)</div>
+                    <div className="text-center glass-light rounded-2xl py-4 bg-white/50 dark:bg-transparent">
+                      <div className="text-2xl font-bold text-slate-900 dark:text-white">{wsPosition ?? queueStatus?.waiting_count ?? 0}</div>
+                      <div className="text-slate-600 dark:text-slate-400 text-xs">Sizdan orqada (kutmoqda)</div>
                     </div>
-                    <div className="text-center glass-light rounded-2xl py-4">
-                      <div className="text-2xl font-bold text-amber-400">~{Math.max(0, (wsPosition ?? queueStatus?.waiting_count ?? 0) * 15)}</div>
-                      <div className="text-slate-400 text-xs">Daqiqa kutish</div>
+                    <div className="text-center glass-light rounded-2xl py-4 bg-white/50 dark:bg-transparent">
+                      <div className="text-2xl font-bold text-amber-500 dark:text-amber-400">~{Math.max(0, (wsPosition ?? queueStatus?.waiting_count ?? 0) * 15)}</div>
+                      <div className="text-slate-600 dark:text-slate-400 text-xs">Daqiqa kutish</div>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Status and Action Card */}
-              <div className="glass rounded-3xl p-8 flex flex-col justify-between">
+              <div className="glass rounded-3xl p-8 flex flex-col justify-between bg-white/50 dark:bg-transparent">
                 <div>
-                  <h3 className="text-xl font-semibold text-white mb-6">Holat ma'lumotlari</h3>
+                  <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-6">Holat ma'lumotlari</h3>
                   
                   <div className="space-y-4 text-sm">
-                    <div className="flex justify-between items-center py-3 border-b border-slate-700/50">
-                      <span className="text-slate-400">Hozirgi navbat:</span>
-                      <span className="text-white font-bold text-lg">{queueStatus?.current_number ? `#${queueStatus.current_number}` : '-'}</span>
+                    <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700/50">
+                      <span className="text-slate-600 dark:text-slate-400">Hozirgi navbat:</span>
+                      <span className="text-slate-900 dark:text-white font-bold text-lg">{queueStatus?.current_number ? `#${queueStatus.current_number}` : '-'}</span>
                     </div>
-                    <div className="flex justify-between items-center py-3 border-b border-slate-700/50">
-                      <span className="text-slate-400">Jami berilgan:</span>
-                      <span className="text-white font-medium">{queueStatus?.total_issued || 0} ta</span>
+                    <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700/50">
+                      <span className="text-slate-600 dark:text-slate-400">Jami berilgan:</span>
+                      <span className="text-slate-900 dark:text-white font-medium">{queueStatus?.total_issued || 0} ta</span>
                     </div>
                   </div>
                 </div>
@@ -285,11 +282,11 @@ export default function Home() {
                   <button
                     onClick={handleCancelTicket}
                     disabled={loading}
-                    className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 py-4 rounded-xl font-medium transition-all duration-300"
+                    className="w-full bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 py-4 rounded-xl font-medium transition-all duration-300"
                   >
                     {loading ? 'Bekor qilinmoqda...' : 'Navbatdan chiqish'}
                   </button>
-                  <p className="text-xs text-slate-500 text-center mt-4">
+                  <p className="text-xs text-slate-500 dark:text-slate-500 text-center mt-4">
                     Agar navbat kutishni xohlamasangiz, navbatdan chiqing.
                   </p>
                 </div>
@@ -303,19 +300,19 @@ export default function Home() {
           <div className="animate-slide-up">
             <button
               onClick={() => { setSelectedOrg(null); setServices([]); }}
-              className="flex items-center gap-2 text-indigo-400 hover:text-white transition-colors mb-6"
+              className="flex items-center gap-2 text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-white transition-colors mb-6 font-medium"
             >
               <ChevronLeft className="w-5 h-5" />
               Orqaga qaytish
             </button>
 
-            <h2 className="text-2xl font-bold text-white mb-2">{selectedOrg.name}</h2>
-            <p className="text-slate-400 flex items-center gap-2 mb-8">
-              <MapPin className="w-4 h-4" /> {selectedOrg.address}
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{selectedOrg.name}</h2>
+            <p className="text-slate-600 dark:text-slate-400 flex items-center gap-2 mb-8">
+              <MapPin className="w-4 h-4 text-indigo-500 dark:text-indigo-400" /> {selectedOrg.address}
             </p>
 
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-indigo-400" />
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
               Xizmat turini tanlang
             </h3>
 
@@ -325,14 +322,14 @@ export default function Home() {
                   key={service.id}
                   onClick={() => handleGetTicket(service.id)}
                   disabled={loading}
-                  className="glass rounded-xl p-6 text-left transition-all duration-300 hover:bg-white/5 hover:ring-2 hover:ring-indigo-500 card-hover"
+                  className="glass rounded-xl p-6 text-left transition-all duration-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:ring-2 hover:ring-indigo-500 card-hover bg-white/50 dark:bg-transparent"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
-                      <span className="text-indigo-400 font-bold">🎫</span>
+                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                      <span className="text-indigo-600 dark:text-indigo-400 font-bold">🎫</span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white">{service.name}</h3>
+                      <h3 className="font-semibold text-slate-900 dark:text-white">{service.name}</h3>
                       <p className="text-xs text-slate-500 mt-1">Navbat olish uchun bosing</p>
                     </div>
                   </div>
@@ -341,8 +338,8 @@ export default function Home() {
             </div>
 
             {services.length === 0 && (
-               <div className="text-center py-12 text-slate-500 glass rounded-2xl">
-                 <FileText className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+               <div className="text-center py-12 text-slate-500 glass rounded-2xl bg-white/50 dark:bg-transparent">
+                 <FileText className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-4" />
                  <p>Ushbu tashkilotda xizmatlar mavjud emas</p>
                </div>
             )}
@@ -353,10 +350,10 @@ export default function Home() {
           /* ================================== */
           <div className="animate-slide-up">
             <div className="mb-10">
-              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
+              <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-3">
                 Barcha <span className="text-gradient">tashkilotlar</span>
               </h1>
-              <p className="text-slate-400 text-lg">
+              <p className="text-slate-600 dark:text-slate-400 text-lg">
                 Kerakli tashkilotni toping va navbat oling
               </p>
             </div>
@@ -370,15 +367,15 @@ export default function Home() {
                   placeholder="Tashkilot nomini qidiring..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 glass rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  className="w-full pl-12 pr-4 py-3.5 glass rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all bg-white/70 dark:bg-transparent"
                 />
               </div>
             </div>
 
             {/* Results Count */}
             <div className="flex items-center justify-between mb-6">
-              <p className="text-slate-400 text-sm">
-                <span className="text-white font-semibold">{filteredOrgs.length}</span> ta tashkilot topildi
+              <p className="text-slate-600 dark:text-slate-400 text-sm">
+                <span className="text-slate-900 dark:text-white font-semibold">{filteredOrgs.length}</span> ta tashkilot topildi
               </p>
             </div>
 
@@ -389,24 +386,24 @@ export default function Home() {
                 const IconComponent = style.icon;
 
                 return (
-                  <div key={org.id} className="glass rounded-2xl p-6 card-hover group cursor-pointer" onClick={() => handleSelectOrg(org)}>
+                  <div key={org.id} className="glass rounded-2xl p-6 card-hover group cursor-pointer bg-white/50 dark:bg-transparent" onClick={() => handleSelectOrg(org)}>
                     <div className="flex items-start gap-4 mb-5">
                       <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${style.color} flex items-center justify-center shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
                         <IconComponent className="w-7 h-7 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-white font-semibold text-lg truncate group-hover:text-indigo-300 transition-colors">{org.name}</h3>
+                          <h3 className="text-slate-900 dark:text-white font-semibold text-lg truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">{org.name}</h3>
                         </div>
-                        <div className="flex items-center gap-1 text-sm text-slate-400">
-                          <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                        <div className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400">
+                          <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-indigo-500 dark:text-indigo-400" />
                           <span className="truncate">{org.address}</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end pt-4 border-t border-slate-700/30">
-                      <button className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 font-medium text-sm transition-colors group/link">
+                    <div className="flex items-center justify-end pt-4 border-t border-slate-200 dark:border-slate-700/30">
+                      <button className="flex items-center gap-1.5 text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 font-medium text-sm transition-colors group/link">
                         Xizmatlarni ko'rish
                         <ChevronRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
                       </button>
@@ -417,10 +414,10 @@ export default function Home() {
             </div>
 
             {filteredOrgs.length === 0 && (
-              <div className="text-center py-20 p-8 glass rounded-2xl">
-                <Search className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                <h3 className="text-white text-xl font-semibold mb-2">Topilmadi</h3>
-                <p className="text-slate-400">Boshqa kalit so'z bilan qidirib ko'ring yoki hozircha idoralar mavjud emas.</p>
+              <div className="text-center py-20 p-8 glass rounded-2xl bg-white/50 dark:bg-transparent">
+                <Search className="w-16 h-16 text-slate-400 dark:text-slate-600 mx-auto mb-4" />
+                <h3 className="text-slate-900 dark:text-white text-xl font-semibold mb-2">Topilmadi</h3>
+                <p className="text-slate-500 dark:text-slate-400">Boshqa kalit so'z bilan qidirib ko'ring yoki hozircha idoralar mavjud emas.</p>
               </div>
             )}
           </div>

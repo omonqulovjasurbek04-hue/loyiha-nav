@@ -14,16 +14,16 @@ export class Operator {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ type: 'uuid' })
   user_id: string;
 
-  @Column()
+  @Column({ type: 'uuid' })
   org_id: string;
 
   @Column()
   window_number: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   current_ticket_id: string | null;
 
   @Column({

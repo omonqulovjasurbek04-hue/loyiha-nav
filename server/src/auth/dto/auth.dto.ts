@@ -41,9 +41,9 @@ export class RegisterDto {
   @MinLength(6, { message: "Parol kamida 6 belgidan iborat bo'lishi kerak" })
   password: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  otp_code: string;
+  otp_code?: string;
 }
 
 export class LoginDto {

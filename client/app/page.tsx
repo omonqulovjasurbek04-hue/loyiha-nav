@@ -1,30 +1,35 @@
+'use client';
+
 import Link from 'next/link';
 import { ArrowRight, Clock, Users, Shield, Zap, Building2, Heart, Landmark, GraduationCap, Banknote, CheckCircle2, Star, ChevronRight, Timer } from 'lucide-react';
-
-const categories = [
-  { icon: Banknote, label: 'Banklar', count: 24, color: 'from-emerald-500 to-teal-600', desc: 'Kredit, karta, hisob' },
-  { icon: Heart, label: 'Shifoxonalar', count: 18, color: 'from-rose-500 to-pink-600', desc: 'Shifokor, tahlil, kasalxona' },
-  { icon: Landmark, label: 'Davlat xizmatlari', count: 32, color: 'from-blue-500 to-cyan-600', desc: 'Pasport, guvohnoma, litsenziya' },
-  { icon: Building2, label: 'Hokimiyat', count: 15, color: 'from-amber-500 to-orange-600', desc: 'Qabulxona, ariza, murojaat' },
-  { icon: GraduationCap, label: 'Ta\'lim', count: 12, color: 'from-violet-500 to-purple-600', desc: 'Universitet, maktab, kurslar' },
-  { icon: Shield, label: 'Soliq', count: 8, color: 'from-indigo-500 to-blue-600', desc: 'Soliq hisoboti, maslahat' },
-];
-
-const stats = [
-  { value: '50+', label: 'Tashkilotlar', icon: Building2 },
-  { value: '10K+', label: 'Foydalanuvchilar', icon: Users },
-  { value: '99.9%', label: 'Ishonchlilik', icon: Shield },
-  { value: '3 daq', label: "O'rtacha kutish", icon: Timer },
-];
-
-const features = [
-  { icon: Clock, title: 'Real-vaqt kuzatish', desc: "Navbatingiz holatini jonli kuzating — qancha odam oldingizda, taxminiy kutish vaqti" },
-  { icon: Zap, title: 'Tez va oson', desc: "3 bosqichda navbat oling: tashkilot tanlang, xizmatni belgilang, vaqtni band qiling" },
-  { icon: Shield, title: 'Xavfsiz tizim', desc: "Shaxsiy ma'lumotlaringiz shifrlangan holda saqlanadi, xavfsiz autentifikatsiya" },
-  { icon: Users, title: "Barcha uchun qulay", desc: "Oddiy interfeys — yoshdan kattaga, har kim osongina foydalana oladi" }
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function LandingPage() {
+  const { t } = useLanguage();
+
+  const categories = [
+    { icon: Banknote, label: t('cat.banks'), count: 24, color: 'from-emerald-500 to-teal-600', desc: t('cat.banks.desc') },
+    { icon: Heart, label: t('cat.hospitals'), count: 18, color: 'from-rose-500 to-pink-600', desc: t('cat.hospitals.desc') },
+    { icon: Landmark, label: t('cat.gov'), count: 32, color: 'from-blue-500 to-cyan-600', desc: t('cat.gov.desc') },
+    { icon: Building2, label: t('cat.hokimiyat'), count: 15, color: 'from-amber-500 to-orange-600', desc: t('cat.hokimiyat.desc') },
+    { icon: GraduationCap, label: t('cat.edu'), count: 12, color: 'from-violet-500 to-purple-600', desc: t('cat.edu.desc') },
+    { icon: Shield, label: t('cat.tax'), count: 8, color: 'from-indigo-500 to-blue-600', desc: t('cat.tax.desc') },
+  ];
+
+  const stats = [
+    { value: '50+', label: t('home.stats.orgs'), icon: Building2 },
+    { value: '10K+', label: t('home.stats.users'), icon: Users },
+    { value: '99.9%', label: t('home.stats.reliability'), icon: Shield },
+    { value: '3 daq', label: t('home.stats.wait'), icon: Timer },
+  ];
+
+  const features = [
+    { icon: Clock, title: t('feat.f1.title'), desc: t('feat.f1.desc') },
+    { icon: Zap, title: t('feat.f2.title'), desc: t('feat.f2.desc') },
+    { icon: Shield, title: t('feat.f3.title'), desc: t('feat.f3.desc') },
+    { icon: Users, title: t('feat.f4.title'), desc: t('feat.f4.desc') }
+  ];
+
   return (
     <div className="pt-8 w-full overflow-hidden">
       {/* Hero Section */}
@@ -33,30 +38,29 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
             <div className="animate-slide-up">
-              <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-4 py-2 mb-6">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                <span className="text-indigo-300 text-sm font-medium">Tizim ishlamoqda</span>
+              <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-full px-4 py-2 mb-6">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span className="text-indigo-600 dark:text-indigo-300 text-sm font-medium">{t('home.status.working')}</span>
               </div>
               
               <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black leading-tight mb-6">
-                <span className="text-white">Onlayn </span>
-                <span className="text-gradient">Navbat</span>
+                <span className="text-slate-900 dark:text-white">{t('home.hero.title1')}</span>
+                <span className="text-gradient">{t('home.hero.title_gradient')}</span>
                 <br />
-                <span className="text-white">Tizimi</span>
+                <span className="text-slate-900 dark:text-white">{t('home.hero.title2')}</span>
               </h1>
 
-              <p className="text-slate-300 text-lg sm:text-xl leading-relaxed mb-8 max-w-xl">
-                Endi navbatda kutish shart emas! Internet orqali navbat oling, 
-                vaqtingizni bilib, kerakli paytda tashkilotga boring.
+              <p className="text-slate-600 dark:text-slate-300 text-lg sm:text-xl leading-relaxed mb-8 max-w-xl">
+                {t('home.hero.desc')}
               </p>
 
               <div className="flex flex-wrap gap-4 mb-10">
                 <Link href="/dashboard" className="btn-primary text-base py-3 px-8">
-                  Navbat olish
+                  {t('home.hero.btn_get')}
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <Link href="/dashboard" className="btn-secondary text-base py-3 px-8">
-                  Tashkilotlarni ko'rish
+                  {t('home.hero.btn_orgs')}
                 </Link>
               </div>
 
@@ -64,12 +68,12 @@ export default function LandingPage() {
               <div className="flex flex-wrap gap-6">
                 {stats.map((stat, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-                      <stat.icon className="w-5 h-5 text-indigo-400" />
+                    <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/10 flex items-center justify-center">
+                      <stat.icon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <div>
-                      <div className="text-white font-bold text-lg">{stat.value}</div>
-                      <div className="text-slate-400 text-xs">{stat.label}</div>
+                      <div className="text-slate-900 dark:text-white font-bold text-lg">{stat.value}</div>
+                      <div className="text-slate-500 dark:text-slate-400 text-xs">{stat.label}</div>
                     </div>
                   </div>
                 ))}
@@ -87,38 +91,38 @@ export default function LandingPage() {
                         <Banknote className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <div className="text-white font-semibold">Ipoteka Bank</div>
-                        <div className="text-slate-400 text-sm">Yunusobod filiali</div>
+                        <div className="text-slate-900 dark:text-white font-semibold">Ipoteka Bank</div>
+                        <div className="text-slate-500 dark:text-slate-400 text-sm">Yunusobod filiali</div>
                       </div>
                     </div>
-                    <div className="bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
+                    <div className="bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 border border-green-200 dark:border-transparent">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse"></div>
                       Faol
                     </div>
                   </div>
 
-                  <div className="bg-indigo-500/10 rounded-2xl p-6 mb-6 text-center">
-                    <div className="text-slate-400 text-sm mb-1">Sizning raqamingiz</div>
+                  <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl p-6 mb-6 text-center border border-indigo-100 dark:border-transparent">
+                    <div className="text-slate-500 dark:text-slate-400 text-sm mb-1">Sizning raqamingiz</div>
                     <div className="text-6xl font-black text-gradient mb-2">A-047</div>
-                    <div className="text-slate-400 text-sm">Karta xizmatlari</div>
+                    <div className="text-slate-500 dark:text-slate-400 text-sm">Karta xizmatlari</div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4 mb-6">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-white">3</div>
-                      <div className="text-slate-400 text-xs">Oldingizda</div>
+                      <div className="text-2xl font-bold text-slate-900 dark:text-white">3</div>
+                      <div className="text-slate-500 dark:text-slate-400 text-xs">Oldingizda</div>
                     </div>
-                    <div className="text-center border-x border-slate-700/50">
-                      <div className="text-2xl font-bold text-amber-400">~12</div>
-                      <div className="text-slate-400 text-xs">Daqiqa</div>
+                    <div className="text-center border-x border-slate-200 dark:border-slate-700/50">
+                      <div className="text-2xl font-bold text-amber-500 dark:text-amber-400">~12</div>
+                      <div className="text-slate-500 dark:text-slate-400 text-xs">Daqiqa</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-green-400">A-044</div>
-                      <div className="text-slate-400 text-xs">Hozirgi</div>
+                      <div className="text-2xl font-bold text-green-500 dark:text-green-400">A-044</div>
+                      <div className="text-slate-500 dark:text-slate-400 text-xs">Hozirgi</div>
                     </div>
                   </div>
 
-                  <div className="w-full bg-slate-700/50 rounded-full h-2">
+                  <div className="w-full bg-slate-200 dark:bg-slate-700/50 rounded-full h-2">
                     <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full" style={{ width: '70%' }}></div>
                   </div>
                 </div>
@@ -126,15 +130,15 @@ export default function LandingPage() {
                 {/* Floating Elements */}
                 <div className="absolute -top-4 -right-4 glass rounded-2xl p-4 animate-float shadow-xl z-30" style={{ animationDelay: '0.5s' }}>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-green-400" />
-                    <span className="text-white text-sm font-medium">Navbat tasdiqlandi!</span>
+                    <CheckCircle2 className="w-5 h-5 text-green-500 dark:text-green-400" />
+                    <span className="text-slate-900 dark:text-white text-sm font-medium">Navbat tasdiqlandi!</span>
                   </div>
                 </div>
 
                 <div className="absolute -bottom-4 -left-4 glass rounded-2xl p-4 animate-float shadow-xl z-30" style={{ animationDelay: '1.5s' }}>
                   <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-amber-400" />
-                    <span className="text-white text-sm font-medium">4.9 reyting</span>
+                    <Star className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+                    <span className="text-slate-900 dark:text-white text-sm font-medium">4.9 reyting</span>
                   </div>
                 </div>
               </div>
@@ -144,14 +148,14 @@ export default function LandingPage() {
       </section>
 
       {/* Categories Section */}
-      <section className="py-20 relative z-10 bg-slate-900/30">
+      <section className="py-20 relative z-10 bg-slate-100/50 dark:bg-slate-900/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Tashkilot <span className="text-gradient">kategoriyalari</span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+              {t('cat.title')} <span className="text-gradient">{t('cat.title_gradient')}</span>
             </h2>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-              Bank, shifoxona, davlat idoralari — barcha tashkilotlarga onlayn navbat oling
+            <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">
+              {t('cat.desc')}
             </p>
           </div>
 
@@ -160,20 +164,20 @@ export default function LandingPage() {
               <Link
                 key={i}
                 href="/dashboard"
-                className="glass rounded-2xl p-6 card-hover group cursor-pointer"
+                className="glass rounded-2xl p-6 card-hover group cursor-pointer bg-white/50 dark:bg-transparent"
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                     <cat.icon className="w-7 h-7 text-white" />
                   </div>
-                  <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all duration-300" />
+                  <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all duration-300" />
                 </div>
-                <h3 className="text-white font-semibold text-lg mb-1">{cat.label}</h3>
-                <p className="text-slate-400 text-sm mb-3">{cat.desc}</p>
+                <h3 className="text-slate-900 dark:text-white font-semibold text-lg mb-1">{cat.label}</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">{cat.desc}</p>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                  <span className="text-slate-500 text-xs">{cat.count} tashkilot</span>
+                  <div className="w-2 h-2 rounded-full bg-green-500 dark:bg-green-400"></div>
+                  <span className="text-slate-500 text-xs">{cat.count} {t('cat.org_count')}</span>
                 </div>
               </Link>
             ))}
@@ -185,29 +189,29 @@ export default function LandingPage() {
       <section className="py-20 relative z-10 w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Qanday <span className="text-gradient">ishlaydi?</span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+              {t('hiw.title')} <span className="text-gradient">{t('hiw.title_gradient')}</span>
             </h2>
-            <p className="text-slate-400 text-lg">Faqat 3 bosqichda navbat oling</p>
+            <p className="text-slate-600 dark:text-slate-400 text-lg">{t('hiw.desc')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { step: '01', title: 'Tashkilotni tanlang', desc: 'Kerakli tashkilot va xizmat turini qidiring.', color: 'from-indigo-500 to-blue-600' },
-              { step: '02', title: 'Onlayn navbat oling', desc: "Kerakli bo'limga tizim orqali yoziling va tasdiqlang", color: 'from-purple-500 to-violet-600' },
-              { step: '03', title: 'Navbatga boring', desc: "Belgilangan raqam yaqinlashganda binosiga boring!", color: 'from-emerald-500 to-teal-600' },
+              { step: '01', title: t('hiw.step1.title'), desc: t('hiw.step1.desc'), color: 'from-indigo-500 to-blue-600' },
+              { step: '02', title: t('hiw.step2.title'), desc: t('hiw.step2.desc'), color: 'from-purple-500 to-violet-600' },
+              { step: '03', title: t('hiw.step3.title'), desc: t('hiw.step3.desc'), color: 'from-emerald-500 to-teal-600' },
             ].map((item, i) => (
               <div key={i} className="relative group">
-                <div className="glass rounded-2xl p-8 card-hover text-center h-full">
+                <div className="glass rounded-2xl p-8 card-hover text-center h-full bg-white/50 dark:bg-transparent">
                   <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                     <span className="text-2xl font-black text-white">{item.step}</span>
                   </div>
-                  <h3 className="text-white text-xl font-bold mb-3">{item.title}</h3>
-                  <p className="text-slate-400 leading-relaxed">{item.desc}</p>
+                  <h3 className="text-slate-900 dark:text-white text-xl font-bold mb-3">{item.title}</h3>
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{item.desc}</p>
                 </div>
                 {i < 2 && (
                   <div className="hidden md:block absolute top-1/2 -right-4 z-10">
-                    <ChevronRight className="w-8 h-8 text-indigo-500/50" />
+                    <ChevronRight className="w-8 h-8 text-indigo-300 dark:text-indigo-500/50" />
                   </div>
                 )}
               </div>
@@ -217,22 +221,22 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="py-20 relative z-10 w-full bg-slate-900/30">
+      <section className="py-20 relative z-10 w-full bg-slate-100/50 dark:bg-slate-900/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Nima uchun <span className="text-gradient">Navbat.uz?</span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+              {t('feat.title')} <span className="text-gradient">{t('feat.title_gradient')}</span>
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
             {features.map((f, i) => (
-              <div key={i} className="glass rounded-2xl p-8 card-hover group w-full">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-5 group-hover:bg-indigo-500/20 transition-colors">
-                  <f.icon className="w-7 h-7 text-indigo-400" />
+              <div key={i} className="glass rounded-2xl p-8 card-hover group w-full bg-white/50 dark:bg-transparent">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-500/10 flex items-center justify-center mb-5 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-500/20 transition-colors">
+                  <f.icon className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
                 </div>
-                <h3 className="text-white text-xl font-bold mb-3">{f.title}</h3>
-                <p className="text-slate-400 leading-relaxed">{f.desc}</p>
+                <h3 className="text-slate-900 dark:text-white text-xl font-bold mb-3">{f.title}</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -242,16 +246,16 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-20 z-10 relative">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="glass rounded-3xl p-10 sm:p-14 text-center glow relative overflow-hidden">
+          <div className="glass rounded-3xl p-10 sm:p-14 text-center glow relative overflow-hidden bg-white/70 dark:bg-transparent">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Hoziroq navbat oling
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+              {t('cta.title')}
             </h2>
-            <p className="text-slate-300 text-lg mb-8 max-w-xl mx-auto">
-              Vaqtingizni tejang — onlayn navbat bilan kutish yo'q, asabingiz tinch!
+            <p className="text-slate-600 dark:text-slate-300 text-lg mb-8 max-w-xl mx-auto">
+              {t('cta.desc')}
             </p>
             <Link href="/dashboard" className="btn-primary text-lg py-4 px-10">
-              Boshlash
+              {t('cta.btn')}
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>

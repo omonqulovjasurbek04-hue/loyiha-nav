@@ -24,7 +24,7 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'OTP orqali tasdiqlab, parol bilan ro\'yxatdan o\'tish' })
   async register(@Body() dto: import('./dto/auth.dto').RegisterDto) {
-    return this.authService.register(dto.phone, dto.otp_code, dto.password, dto.full_name);
+    return this.authService.register(dto.phone, dto.otp_code || '', dto.password, dto.full_name);
   }
 
   @Post('login')
